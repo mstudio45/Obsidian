@@ -3492,7 +3492,9 @@ do
 		end
 
 		function Dropdown:SetValue(Value)
-			if Info.Multi then
+			if Info.Multi == true then
+				if typeof(Value) ~= "table" then return end
+
 				local Table = {}
 
 				for Val, Active in pairs(Value) do
@@ -3503,9 +3505,9 @@ do
 
 				Dropdown.Value = Table
 			else
-				if table.find(Dropdown.Values, Value) then
+				if typeof(Value) == "string" and table.find(Dropdown.Values, Value) then
 					Dropdown.Value = Value
-				elseif not Value then
+				else
 					Dropdown.Value = nil
 				end
 			end
