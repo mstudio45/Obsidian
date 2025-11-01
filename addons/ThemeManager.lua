@@ -296,7 +296,8 @@ do
 
     function ThemeManager:SaveCustomTheme(file)
         if file:gsub(" ", "") == "" then
-            return self.Library:Notify("Invalid file name for theme (empty)", 3)
+            self.Library:Notify("Invalid file name for theme (empty)", 3)
+            return
         end
 
         local theme = {}
@@ -426,7 +427,8 @@ do
 
             local success, err = self:Delete(name)
             if not success then
-                return self.Library:Notify("Failed to delete theme: " .. err)
+                self.Library:Notify("Failed to delete theme: " .. err)
+                return
             end
 
             self.Library:Notify(string.format("Deleted theme %q", name))
@@ -451,7 +453,8 @@ do
         groupbox:AddButton("Reset default", function()
             local success = pcall(delfile, self.Folder .. "/themes/default.txt")
             if not success then
-                return self.Library:Notify("Failed to reset default: delete file error")
+                self.Library:Notify("Failed to reset default: delete file error")
+                return
             end
 
             self.Library:Notify("Set default theme to nothing")
@@ -465,6 +468,7 @@ do
         local function UpdateTheme()
             self:ThemeUpdate()
         end
+        
         self.Library.Options.BackgroundColor:OnChanged(UpdateTheme)
         self.Library.Options.MainColor:OnChanged(UpdateTheme)
         self.Library.Options.AccentColor:OnChanged(UpdateTheme)
