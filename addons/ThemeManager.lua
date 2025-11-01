@@ -398,8 +398,16 @@ do
 
         groupbox:AddInput("ThemeManager_CustomThemeName", { Text = "Custom theme name" })
         groupbox:AddButton("Create theme", function()
-            self:SaveCustomTheme(self.Library.Options.ThemeManager_CustomThemeName.Value)
+            local name = self.Library.Options.ThemeManager_CustomThemeName.Value
 
+            if name:gsub(" ", "") == "" then
+                self.Library:Notify("Invalid theme name (empty)", 2)
+                return
+            end
+
+            self:SaveCustomTheme(name)
+
+            self.Library:Notify(string.format("Created theme %q", name))
             self.Library.Options.ThemeManager_CustomThemeList:SetValues(self:ReloadCustomThemes())
             self.Library.Options.ThemeManager_CustomThemeList:SetValue(nil)
         end)
@@ -468,7 +476,7 @@ do
         local function UpdateTheme()
             self:ThemeUpdate()
         end
-        
+
         self.Library.Options.BackgroundColor:OnChanged(UpdateTheme)
         self.Library.Options.MainColor:OnChanged(UpdateTheme)
         self.Library.Options.AccentColor:OnChanged(UpdateTheme)
