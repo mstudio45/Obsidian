@@ -426,7 +426,6 @@ local SaveManager = {} do
             end
 
             self.Library:Notify(string.format("Created config %q", name))
-
             self.Library.Options.SaveManager_ConfigList:SetValues(self:RefreshConfigList())
             self.Library.Options.SaveManager_ConfigList:SetValue(nil)
         end)
