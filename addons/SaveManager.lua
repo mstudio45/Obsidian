@@ -1,14 +1,20 @@
-local cloneref = (cloneref or clonereference or function(instance: any) return instance end)
-local httpService = cloneref(game:GetService("HttpService"))
+local cloneref = (cloneref or clonereference or function(instance: any)
+    return instance
+end)
+local clonefunction = (clonefunction or copyfunction or function(func) 
+    return func 
+end)
+
+local HttpService: HttpService = cloneref(game:GetService("HttpService"))
 local isfolder, isfile, listfiles = isfolder, isfile, listfiles
 
-if typeof(copyfunction) == "function" then
+if typeof(clonefunction) == "function" then
     -- Fix is_____ functions for shitsploits, those functions should never error, only return a boolean.
 
     local
         isfolder_copy,
         isfile_copy,
-        listfiles_copy = copyfunction(isfolder), copyfunction(isfile), copyfunction(listfiles)
+        listfiles_copy = clonefunction(isfolder), clonefunction(isfile), clonefunction(listfiles)
 
     local isfolder_success, isfolder_error = pcall(function()
         return isfolder_copy("test" .. tostring(math.random(1000000, 9999999)))
@@ -219,7 +225,7 @@ local SaveManager = {} do
             table.insert(data.objects, self.Parser[option.Type].Save(idx, option))
         end
 
-        local success, encoded = pcall(httpService.JSONEncode, httpService, data)
+        local success, encoded = pcall(HttpService.JSONEncode, HttpService, data)
         if not success then
             return false, "failed to encode data"
         end
@@ -241,12 +247,13 @@ local SaveManager = {} do
 
         if not isfile(file) then return false, "invalid file" end
 
-        local success, decoded = pcall(httpService.JSONDecode, httpService, readfile(file))
+        local success, decoded = pcall(HttpService.JSONDecode, HttpService, readfile(file))
         if not success then return false, "decode error" end
 
         for _, option in pairs(decoded.objects) do
             if not option.type then continue end
             if not self.Parser[option.type] then continue end
+            if self.Ignore[option.idx] then continue end
 
             task.spawn(self.Parser[option.type].Load, option.idx, option) -- task.spawn() so the config loading wont get stuck.
         end
