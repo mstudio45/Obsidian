@@ -362,12 +362,14 @@ local SaveManager = {} do
         if isfile(autoLoadPath) then
             local successRead, name = pcall(readfile, autoLoadPath)
             if not successRead then
-                return self.Library:Notify("Failed to load autoload config: write file error")
+                self.Library:Notify("Failed to load autoload config: write file error")
+                return
             end
 
             local success, err = self:Load(name)
             if not success then
-                return self.Library:Notify("Failed to load autoload config: " .. err)
+                self.Library:Notify("Failed to load autoload config: " .. err)
+                return
             end
 
             self.Library:Notify(string.format("Auto loaded config %q", name))
@@ -413,12 +415,14 @@ local SaveManager = {} do
             local name = self.Library.Options.SaveManager_ConfigName.Value
 
             if name:gsub(" ", "") == "" then
-                return self.Library:Notify("Invalid config name (empty)", 2)
+                self.Library:Notify("Invalid config name (empty)", 2)
+                return
             end
 
             local success, err = self:Save(name)
             if not success then
-                return self.Library:Notify("Failed to create config: " .. err)
+                self.Library:Notify("Failed to create config: " .. err)
+                return
             end
 
             self.Library:Notify(string.format("Created config %q", name))
@@ -435,7 +439,8 @@ local SaveManager = {} do
 
             local success, err = self:Load(name)
             if not success then
-                return self.Library:Notify("Failed to load config: " .. err)
+                self.Library:Notify("Failed to load config: " .. err)
+                return
             end
 
             self.Library:Notify(string.format("Loaded config %q", name))
@@ -445,7 +450,8 @@ local SaveManager = {} do
 
             local success, err = self:Save(name)
             if not success then
-                return self.Library:Notify("Failed to overwrite config: " .. err)
+                self.Library:Notify("Failed to overwrite config: " .. err)
+                return
             end
 
             self.Library:Notify(string.format("Overwrote config %q", name))
@@ -456,7 +462,8 @@ local SaveManager = {} do
 
             local success, err = self:Delete(name)
             if not success then
-                return self.Library:Notify("Failed to delete config: " .. err)
+                self.Library:Notify("Failed to delete config: " .. err)
+                return
             end
 
             self.Library:Notify(string.format("Deleted config %q", name))
@@ -474,23 +481,25 @@ local SaveManager = {} do
 
             local success, err = self:SaveAutoloadConfig(name)
             if not success then
-                return self.Library:Notify("Failed to set autoload config: " .. err)
+                self.Library:Notify("Failed to set autoload config: " .. err)
+                return
             end
 
-            SaveManager.AutoloadLabel:SetText("Current autoload config: " .. name)
             self.Library:Notify(string.format("Set %q to auto load", name))
+            self.AutoloadConfigLabel:SetText("Current autoload config: " .. name)
         end)
         section:AddButton("Reset autoload", function()
             local success, err = self:DeleteAutoLoadConfig()
             if not success then
-                return self.Library:Notify("Failed to set autoload config: " .. err)
+                self.Library:Notify("Failed to set autoload config: " .. err)
+                return
             end
 
             self.Library:Notify("Set autoload to none")
-            SaveManager.AutoloadLabel:SetText("Current autoload config: none")
+            self.AutoloadConfigLabel:SetText("Current autoload config: none")
         end)
 
-        self.AutoloadLabel = section:AddLabel("Current autoload config: " .. self:GetAutoloadConfig(), true)
+        self.AutoloadConfigLabel = section:AddLabel("Current autoload config: " .. self:GetAutoloadConfig(), true)
 
         -- self:LoadAutoloadConfig()
         self:SetIgnoreIndexes({ "SaveManager_ConfigList", "SaveManager_ConfigName" })
