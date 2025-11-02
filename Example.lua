@@ -48,15 +48,15 @@ local Tabs = {
 --[[
 Example of how to add a warning box to a tab; the title AND text support rich text formatting.
 
-local WarningTab = Tabs["UI Settings"]:AddTab("Warning Box", "user")
+local UISettingsTab = Tabs["UI Settings"]
 
-WarningTab:UpdateWarningBox({
+UISettingsTab:UpdateWarningBox({
 	Visible = true,
 	Title = "Warning",
 	Text = "This is a warning box!",
 })
 
-]]
+--]]
 
 -- Groupbox and Tabbox inherit the same functions
 -- except Tabboxes you have to call the functions on a tab (Tabbox:AddTab(Name))
