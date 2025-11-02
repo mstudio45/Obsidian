@@ -1,3 +1,16 @@
+## 02.11.2025
+
+```diff
++ Warning Box now follows the UI style of Obsidian (rounded corners with outlines)
++ Watermark now correctly resizes itself with new line characters
+```
+
+## 01.11.2025
+
+```diff
++ The ignored indexes (SaveManager.SetIgnoreIndexes) are no longer applied when you load a configuration that contains them
+```
+
 ## 5.10.2025
 
 ```diff
