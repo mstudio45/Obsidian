@@ -1576,10 +1576,11 @@ do
 
     local function ResizeWatermark()
         local X, Y = Library:GetTextBounds(WatermarkLabel.Text, Library.Scheme.Font, 15)
-        WatermarkBackground.Size = UDim2.fromOffset((12 + X + 12 + 4) * Library.DPIScale, Y * Library.DPIScale * 2 + 4)
+        WatermarkBackground.Size = UDim2.fromOffset((12 + X + 12 + 4) * Library.DPIScale, Y + 12 + 4)
         Library:UpdateDPI(WatermarkBackground, {
-            Size = UDim2.fromOffset(12 + X + 12 + 4, Y * 2 + 4),
+            Size = UDim2.fromOffset(12 + X + 12 + 4, Y + 12 + 4),
         })
+        WatermarkLabel.Size = UDim2.new(1, 0, 0, WatermarkBackground.Size.Y.Offset)
     end
 
     function Library:SetWatermarkVisibility(Visible: boolean)
