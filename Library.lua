@@ -5780,6 +5780,7 @@ function Library:CreateWindow(WindowInfo)
     local Tabs
     local Container
     local Window
+    local WindowTitle
 
     local SidebarHighlightCallback = WindowInfo.SidebarHighlightCallback
 
@@ -6092,7 +6093,7 @@ function Library:CreateWindow(WindowInfo)
         WindowIcon.Visible = WindowInfo.Icon ~= nil or LayoutState.IsCompact
         LayoutRefs.WindowIcon = WindowIcon
 
-        local WindowTitle = New("TextButton", {
+        WindowTitle = New("TextButton", {
             BackgroundTransparency = 1,
             Text = WindowInfo.Title,
             TextSize = 20,
@@ -6467,6 +6468,13 @@ function Library:CreateWindow(WindowInfo)
 
     function Window:ApplyLayout()
         ApplySidebarLayout()
+    end
+
+    function Window:ChangeTitle(title)
+        assert(typeof(title) == "string", "Expected string for title got: " .. typeof(title))
+        
+        WindowTitle.Text = title
+        WindowInfo.Title = title
     end
 
     function Window:AddTab(...)
