@@ -337,6 +337,7 @@ local Templates = {
     Image = {
         Image = "",
         Transparency = 0,
+        BackgroundTransparency = 0,
         Color = Color3.new(1, 1, 1),
         RectOffset = Vector2.zero,
         RectSize = Vector2.zero,
@@ -5034,6 +5035,7 @@ do
             Height = Info.Height,
             ScaleType = Info.ScaleType,
             Transparency = Info.Transparency,
+            BackgroundTransparency = Info.BackgroundTransparency,
 
             Visible = Info.Visible,
             Type = "Image",
@@ -5051,6 +5053,7 @@ do
             BackgroundColor3 = "MainColor",
             BorderColor3 = "OutlineColor",
             BorderSizePixel = 1,
+            BackgroundTransparency = Image.BackgroundTransparency,
             Position = UDim2.fromScale(0, 1),
             Size = UDim2.fromScale(1, 1),
             Parent = Holder,
