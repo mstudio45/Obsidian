@@ -680,7 +680,12 @@ export type Window = {
         Icon: string?,
         Description: string?
     ) -> Tab,
-    AddKeyTab: (self: Window, Name: string) -> KeyTab,
+    AddKeyTab: (
+        self: Window,
+        Info: { Name: string, Icon: string?, Description: string? } | string,
+        Icon: string?,
+        Description: string?
+    ) -> KeyTab,
 }
 
 --// Main Library Type
@@ -693,6 +698,7 @@ export type Library = {
     ScreenGui: ScreenGui?,
     SearchText: string,
     Searching: boolean,
+    GlobalSearch: boolean,
     LastSearchTab: Tab?,
     ActiveTab: Tab?,
     Tabs: { [string]: Tab | KeyTab },
@@ -801,6 +807,7 @@ export type Library = {
             Resizable: boolean?,
             DisableSearch: boolean?,
             SearchbarSize: UDim2?,
+            GlobalSearch: boolean?,
             CornerRadius: number?,
             NotifySide: "Left" | "Right"?,
             ShowCustomCursor: boolean?,
