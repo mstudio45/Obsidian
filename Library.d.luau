@@ -732,6 +732,11 @@ export type Library = {
     Registry: { [GuiObject]: { [string]: string | () -> Color3 } },
     DPIRegistry: { [GuiObject]: { [string]: any } },
     CopiedColor: { Color3 | number }?,
+    ImageManager: {
+        AddAsset: (AssetName: string, RobloxAssetId: number, URL: string, ForceRedownload: boolean?) -> nil,
+        GetAsset: (AssetName: string) -> string?,
+        DownloadAsset: (AssetName: string, ForceRedownload: boolean?) -> nil
+    },
 
     -- Methods
     UpdateKeybindFrame: (self: Library) -> (),
