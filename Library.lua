@@ -26,6 +26,7 @@ local Labels = {}
 local Buttons = {}
 local Toggles = {}
 local Options = {}
+local Tooltips = {}
 
 local BaseURL = "https://raw.githubusercontent.com/deividcomsono/Obsidian/refs/heads/main/"
 local CustomImageManager = {}
@@ -484,7 +485,7 @@ end
 local function GetTableSize(Table: { [any]: any })
     local Size = 0
 
-    for _, _ in pairs(Table) do
+    for _, _ in Table do
         Size += 1
     end
 
@@ -1079,8 +1080,12 @@ function Library:SetDPIScale(DPIScale: number)
     end
 end
 
-function Library:GiveSignal(Connection: RBXScriptConnection)
-    table.insert(Library.Signals, Connection)
+function Library:GiveSignal(Connection: RBXScriptConnection | RBXScriptSignal)
+    local ConnectionType = typeof(Connection)
+    if Connection and (ConnectionType == "RBXScriptConnection" or ConnectionType == "RBXScriptSignal") then
+        table.insert(Library.Signals, Connection)
+    end
+
     return Connection
 end
 
@@ -1440,6 +1445,7 @@ function Library:MakeResizable(UI: GuiObject, DragFrame: GuiObject, Callback: ()
     local FrameSize
     local Dragging = false
     local Changed
+
     DragFrame.InputBegan:Connect(function(Input: InputObject)
         if not IsClickInput(Input) then
             return
@@ -1461,6 +1467,7 @@ function Library:MakeResizable(UI: GuiObject, DragFrame: GuiObject, Callback: ()
             end
         end)
     end)
+
     Library:GiveSignal(UserInputService.InputChanged:Connect(function(Input: InputObject)
         if not UI.Visible or not (ScreenGui and ScreenGui.Parent) then
             Dragging = false
@@ -1854,6 +1861,10 @@ function Library:AddContextMenu(
 end
 
 Library:GiveSignal(UserInputService.InputBegan:Connect(function(Input: InputObject)
+    if Library.Unloaded then
+        return
+    end
+
     if IsClickInput(Input, true) then
         local Location = Input.Position
 
@@ -1881,6 +1892,10 @@ local TooltipLabel = New("TextLabel", {
     Parent = ScreenGui,
 })
 TooltipLabel:GetPropertyChangedSignal("AbsolutePosition"):Connect(function()
+    if Library.Unloaded then
+        return
+    end
+
     local X, Y = Library:GetTextBounds(
         TooltipLabel.Text,
         TooltipLabel.FontFace,
@@ -1936,32 +1951,44 @@ function Library:AddTooltip(InfoStr: string, DisabledInfoStr: string, HoverInsta
         CurrentHoverInstance = nil
     end
 
-    table.insert(TooltipTable.Signals, HoverInstance.MouseEnter:Connect(DoHover))
-    table.insert(TooltipTable.Signals, HoverInstance.MouseMoved:Connect(DoHover))
-    table.insert(
-        TooltipTable.Signals,
-        HoverInstance.MouseLeave:Connect(function()
-            if CurrentHoverInstance ~= HoverInstance then
-                return
-            end
+    local function GiveSignal(Connection: RBXScriptConnection | RBXScriptSignal)
+        local ConnectionType = typeof(Connection)
+        if Connection and (ConnectionType == "RBXScriptConnection" or ConnectionType == "RBXScriptSignal") then
+            table.insert(TooltipTable.Signals, Connection)
+        end
 
-            TooltipLabel.Visible = false
-            CurrentHoverInstance = nil
-        end)
-    )
+        return Connection
+    end
+
+    GiveSignal(HoverInstance.MouseEnter:Connect(DoHover))
+    GiveSignal(HoverInstance.MouseMoved:Connect(DoHover))
+    GiveSignal(HoverInstance.MouseLeave:Connect(function()
+        if CurrentHoverInstance ~= HoverInstance then
+            return
+        end
+
+        TooltipLabel.Visible = false
+        CurrentHoverInstance = nil
+    end))
 
     function TooltipTable:Destroy()
         for Index = #TooltipTable.Signals, 1, -1 do
             local Connection = table.remove(TooltipTable.Signals, Index)
-            Connection:Disconnect()
+            if Connection and Connection.Connected then
+                Connection:Disconnect()
+            end
         end
 
         if CurrentHoverInstance == HoverInstance then
-            TooltipLabel.Visible = false
+            if TooltipLabel then
+                TooltipLabel.Visible = false
+            end
+
             CurrentHoverInstance = nil
         end
     end
 
+    table.insert(Tooltips, TooltipLabel)
     return TooltipTable
 end
 
@@ -1972,15 +1999,22 @@ end
 function Library:Unload()
     for Index = #Library.Signals, 1, -1 do
         local Connection = table.remove(Library.Signals, Index)
-        Connection:Disconnect()
+        if Connection and Connection.Connected then
+            Connection:Disconnect()
+        end
     end
 
-    for _, Callback in pairs(Library.UnloadSignals) do
+    for _, Callback in Library.UnloadSignals do
         Library:SafeCallback(Callback)
+    end
+
+    for _, Tooltip in Tooltips do
+        Library:SafeCallback(Tooltip.Destroy, Tooltip)
     end
 
     Library.Unloaded = true
     ScreenGui:Destroy()
+
     getgenv().Library = nil
 end
 
@@ -2255,6 +2289,7 @@ do
                 Checkbox.Visible = not Normal
             end
 
+            KeyPicker.DoClick = function(...) end --// make luau lsp shut up
             Holder.MouseButton1Click:Connect(function()
                 if KeybindsToggle.Normal then
                     return
@@ -2574,6 +2609,10 @@ do
         Picker.MouseButton2Click:Connect(MenuTable.Toggle)
 
         Library:GiveSignal(UserInputService.InputBegan:Connect(function(Input: InputObject)
+            if Library.Unloaded then
+                return
+            end
+            
             if
                 KeyPicker.Mode == "Always"
                 or KeyPicker.Value == "Unknown"
@@ -2614,6 +2653,10 @@ do
         end))
 
         Library:GiveSignal(UserInputService.InputEnded:Connect(function()
+            if Library.Unloaded then
+                return
+            end
+
             if
                 KeyPicker.Value == "Unknown"
                 or KeyPicker.Value == "None"
@@ -2863,6 +2906,7 @@ do
                 Library.CopiedColor = { ColorPicker.Value, ColorPicker.Transparency }
             end)
 
+            ColorPicker.SetValueRGB = function(...) end --// make luau lsp shut up
             CreateButton("Paste color", function()
                 ColorPicker:SetValueRGB(Library.CopiedColor[1], Library.CopiedColor[2])
             end)
@@ -4909,6 +4953,10 @@ do
         end)
 
         Library:GiveSignal(UserInputService.InputEnded:Connect(function(input)
+            if Library.Unloaded then
+                return
+            end
+
             if not Viewport.Interactive then
                 return
             end
@@ -4921,6 +4969,10 @@ do
         end))
 
         Library:GiveSignal(UserInputService.InputChanged:Connect(function(input)
+            if Library.Unloaded then
+                return
+            end
+
             if not Viewport.Interactive or not Dragging or Pinching then
                 return
             end
@@ -4959,6 +5011,10 @@ do
         end)
 
         Library:GiveSignal(UserInputService.TouchPinch:Connect(function(touchPositions, scale, velocity, state)
+            if Library.Unloaded then
+                return
+            end
+
             if not Viewport.Interactive or not Library:MouseIsOverFrame(ViewportFrame, touchPositions[1]) then
                 return
             end
@@ -4967,11 +5023,13 @@ do
                 Pinching = true
                 Dragging = false
                 LastPinchDist = (touchPositions[1] - touchPositions[2]).Magnitude
+
             elseif state == Enum.UserInputState.Change then
                 local currentDist = (touchPositions[1] - touchPositions[2]).Magnitude
                 local delta = (currentDist - LastPinchDist) * 0.1
                 LastPinchDist = currentDist
                 Viewport.Camera.CFrame += Viewport.Camera.CFrame.LookVector * delta
+
             elseif state == Enum.UserInputState.End or state == Enum.UserInputState.Cancel then
                 Pinching = false
             end
@@ -6432,10 +6490,10 @@ function Library:CreateWindow(WindowInfo)
             Parent = ResizeButton,
         })
 
-        Library:GiveSignal(MainFrame:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
+        MainFrame:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
             EnsureSidebarBounds()
             ApplySidebarLayout()
-        end))
+        end)
 
         --// Tabs \\--
         Tabs = New("ScrollingFrame", {
@@ -6520,8 +6578,10 @@ function Library:CreateWindow(WindowInfo)
                     if input.UserInputState == Enum.UserInputState.End then
                         SidebarDrag.Active = false
                         SidebarDrag.TouchId = nil
+
                         local IsOver = Library:MouseIsOverFrame(SidebarGrabber, Vector2.new(Mouse.X, Mouse.Y))
                         SetSidebarHighlight(IsOver and Library.Toggled)
+
                         if Connection then
                             Connection:Disconnect()
                         end
@@ -6530,6 +6590,10 @@ function Library:CreateWindow(WindowInfo)
             end))
 
             Library:GiveSignal(UserInputService.InputChanged:Connect(function(input)
+                if Library.Unloaded then
+                    return
+                end
+
                 if not SidebarDrag.Active then
                     return
                 end
@@ -6548,6 +6612,10 @@ function Library:CreateWindow(WindowInfo)
             end))
 
             Library:GiveSignal(UserInputService.InputEnded:Connect(function(input)
+                if Library.Unloaded then
+                    return
+                end
+
                 if not SidebarDrag.Active then
                     return
                 end
@@ -7360,7 +7428,7 @@ function Library:CreateWindow(WindowInfo)
 
         local TabContainer
 
-        Icon = Library:GetCustomIcon(Icon)
+        Icon = if Icon == "key" then KeyIcon else Library:GetCustomIcon(Icon)
         do
             TabButton = New("TextButton", {
                 BackgroundColor3 = "MainColor",
@@ -7619,13 +7687,16 @@ function Library:CreateWindow(WindowInfo)
                     RunService:UnbindFromRenderStep("ShowCursor")
                 end
             end)
+
         elseif not Library.Toggled then
             SetSidebarHighlight(false)
             TooltipLabel.Visible = false
+
             for _, Option in pairs(Library.Options) do
                 if Option.Type == "ColorPicker" then
                     Option.ColorMenu:Close()
                     Option.ContextMenu:Close()
+
                 elseif Option.Type == "Dropdown" or Option.Type == "KeyPicker" then
                     Option.Menu:Close()
                 end
@@ -7664,6 +7735,10 @@ function Library:CreateWindow(WindowInfo)
     end)
 
     Library:GiveSignal(UserInputService.InputBegan:Connect(function(Input: InputObject)
+        if Library.Unloaded then
+            return
+        end
+
         if UserInputService:GetFocusedTextBox() then
             return
         end
@@ -7690,18 +7765,25 @@ function Library:CreateWindow(WindowInfo)
 end
 
 local function OnPlayerChange()
-    local PlayerList, ExcludedPlayerList = GetPlayers(), GetPlayers(true)
+    if Library.Unloaded then
+        return
+    end
 
-    for _, Dropdown in pairs(Options) do
+    local PlayerList, ExcludedPlayerList = GetPlayers(), GetPlayers(true)
+    for _, Dropdown in Options do
         if Dropdown.Type == "Dropdown" and Dropdown.SpecialType == "Player" then
             Dropdown:SetValues(Dropdown.ExcludeLocalPlayer and ExcludedPlayerList or PlayerList)
         end
     end
 end
-local function OnTeamChange()
-    local TeamList = GetTeams()
 
-    for _, Dropdown in pairs(Options) do
+local function OnTeamChange()
+    if Library.Unloaded then
+        return
+    end
+
+    local TeamList = GetTeams()
+    for _, Dropdown in Options do
         if Dropdown.Type == "Dropdown" and Dropdown.SpecialType == "Team" then
             Dropdown:SetValues(TeamList)
         end
