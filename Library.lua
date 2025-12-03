@@ -1056,9 +1056,11 @@ function Library:SetDPIScale(DPIScale: number)
         end
 
         Tab:Resize(true)
+
         for _, Groupbox in pairs(Tab.Groupboxes) do
             Groupbox:Resize()
         end
+
         for _, Tabbox in pairs(Tab.Tabboxes) do
             for _, SubTab in pairs(Tabbox.Tabs) do
                 SubTab:Resize()
@@ -5468,10 +5470,12 @@ do
             DependencyBoxes = {},
         }
 
-        function Depbox:Resize()
+        local function ResizeDepbox()
             DepboxContainer.Size = UDim2.new(1, 0, 0, DepboxList.AbsoluteContentSize.Y * Library.DPIScale)
             Groupbox:Resize()
         end
+
+        function Depbox:Resize() task.defer(ResizeDepbox) end
 
         function Depbox:Update(CancelSearch)
             for _, Dependency in pairs(Depbox.Dependencies) do
@@ -5594,9 +5598,11 @@ do
             DependencyBoxes = {},
         }
 
-        function DepGroupbox:Resize()
+        local function ResizeDepGroupbox()
             Background.Size = UDim2.new(1, 0, 0, DepGroupboxList.AbsoluteContentSize.Y + 18 * Library.DPIScale)
         end
+
+        function DepGroupbox:Resize() task.defer(ResizeDepGroupbox) end
 
         function DepGroupbox:Update(CancelSearch)
             for _, Dependency in pairs(DepGroupbox.Dependencies) do
@@ -7130,9 +7136,11 @@ function Library:CreateWindow(WindowInfo)
                 Elements = {},
             }
 
-            function Groupbox:Resize()
+            local function ResizeGroupbox()
                 Background.Size = UDim2.new(1, 0, 0, GroupboxList.AbsoluteContentSize.Y + 53 * Library.DPIScale)
             end
+
+            function Groupbox:Resize() task.defer(ResizeGroupbox) end
 
             setmetatable(Groupbox, BaseGroupbox)
 
@@ -7272,12 +7280,15 @@ function Library:CreateWindow(WindowInfo)
                     Tabbox.ActiveTab = nil
                 end
 
-                function Tab:Resize()
+                local function ResizeTab()
                     if Tabbox.ActiveTab ~= Tab then
                         return
                     end
+
                     Background.Size = UDim2.new(1, 0, 0, List.AbsoluteContentSize.Y + 53 * Library.DPIScale)
                 end
+
+                function Tab:Resize() task.defer(ResizeTab) end
 
                 --// Execution \\--
                 if not Tabbox.ActiveTab then
