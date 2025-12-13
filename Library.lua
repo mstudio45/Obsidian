@@ -4672,7 +4672,9 @@ do
                 local Table = {}
 
                 for Val, Active in pairs(Value or {}) do
-                    if Active and table.find(Dropdown.Values, Val) then
+                    if typeof(Active) ~= "boolean" then
+                        Table[Active] = true
+                    elseif Active and table.find(Dropdown.Values, Val) then
                         Table[Val] = true
                     end
                 end
