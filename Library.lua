@@ -2076,7 +2076,10 @@ do
 
         if KeyPicker.SyncToggleState then
             Info.Modes = { "Toggle", "Hold" }
-            Info.Mode = "Toggle"
+
+            if not table.find(Info.Modes, Info.Mode) then
+                Info.Mode = "Toggle"
+            end
         end
 
         local Picking = false
