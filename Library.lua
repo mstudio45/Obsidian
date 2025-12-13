@@ -2075,7 +2075,7 @@ do
         end
 
         if KeyPicker.SyncToggleState then
-            Info.Modes = { "Toggle" }
+            Info.Modes = { "Toggle", "Hold" }
             Info.Mode = "Toggle"
         end
 
@@ -2385,6 +2385,10 @@ do
                 return
             end
 
+            if ParentObj.Type == "Toggle" and KeyPicker.SyncToggleState then
+                ParentObj:SetValue(KeyPicker.Toggled)
+            end
+
             local State = KeyPicker:GetState()
             local ShowToggle = Library.ShowToggleFrameInKeybinds and KeyPicker.Mode == "Toggle"
 
@@ -2442,10 +2446,6 @@ do
                 end
 
                 KeyPicker.Toggled = true
-            end
-
-            if ParentObj.Type == "Toggle" and KeyPicker.SyncToggleState then
-                ParentObj:SetValue(KeyPicker.Toggled)
             end
 
             Library:SafeCallback(KeyPicker.Callback, KeyPicker.Toggled)
