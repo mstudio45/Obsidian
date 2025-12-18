@@ -657,24 +657,16 @@ Tabs.Key:AddLabel({
 	Size = 16,
 })
 
-Tabs.Key:AddKeyBox("Banana", function(Success, ReceivedKey)
+Tabs.Key:AddKeyBox(function(ReceivedKey)
+	-- KeyBox only takes the callback for the button, you need to implement your own key check inside the callback
+	local Success = ReceivedKey == "Banana"
+
 	print("Expected Key: Banana - Received Key:", ReceivedKey, "| Success:", Success)
 	Library:Notify({
 		Title = "Expected Key: Banana",
 		Description = "Received Key: " .. ReceivedKey .. "\nSuccess: " .. tostring(Success),
 		Time = 4,
 	})
-end)
-
-Tabs.Key:AddLabel({
-	Text = "No Key",
-	DoesWrap = true,
-	Size = 16,
-})
-
-Tabs.Key:AddKeyBox(function(Success, ReceivedKey)
-	print("Expected Key: None | Success:", Success) -- true
-	Library:Notify("Success: " .. tostring(Success), 4)
 end)
 
 -- UI Settings

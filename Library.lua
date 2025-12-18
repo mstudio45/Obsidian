@@ -7517,17 +7517,8 @@ function Library:CreateWindow(WindowInfo)
             IsKeyTab = true,
         }
 
-        function Tab:AddKeyBox(...)
-            local Data = {}
-
-            local First = select(1, ...)
-
-            if typeof(First) == "function" then
-                Data.Callback = First
-            else
-                Data.ExpectedKey = First
-                Data.Callback = select(2, ...)
-            end
+        function Tab:AddKeyBox(Callback)
+            assert(typeof(Callback) == "function", "Callback must be a function")
 
             local Holder = New("Frame", {
                 BackgroundTransparency = 1,
@@ -7563,13 +7554,16 @@ function Library:CreateWindow(WindowInfo)
                 Parent = Holder,
             })
 
-            Button.MouseButton1Click:Connect(function()
-                if Data.ExpectedKey and Box.Text ~= Data.ExpectedKey then
-                    Data.Callback(false, Box.Text)
+            Button.InputBegan:Connect(function(Input) 
+                if not IsClickInput(Input) then
                     return
                 end
 
-                Data.Callback(true, Box.Text)
+                if not Library:MouseIsOverFrame(Button, Input.Position) then
+                    return
+                end
+
+                Callback(Box.Text)
             end)
         end
 
