@@ -1,7 +1,7 @@
 ## 18.12.2025
 
 ```diff
-+ Fixed static key bypass inside Key Box
++ Patched static key bypass inside Key Box
     * The AddKeyBox function now only takes the callback function
     * The callback function only returns the provided key, you need to implement your own handler inside the callback
 ```
