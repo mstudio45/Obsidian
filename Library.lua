@@ -184,6 +184,7 @@ local Library = {
     Signals = {},
     UnloadSignals = {},
 
+    OriginalMinSize = Vector2.new(480, 360),
     MinSize = Vector2.new(480, 360),
     DPIScale = 1,
     CornerRadius = 4,
@@ -211,17 +212,17 @@ local Library = {
 if RunService:IsStudio() then
     if UserInputService.TouchEnabled and not UserInputService.MouseEnabled then
         Library.IsMobile = true
-        Library.MinSize = Vector2.new(480, 240)
+        Library.OriginalMinSize = Vector2.new(480, 240)
     else
         Library.IsMobile = false
-        Library.MinSize = Vector2.new(480, 360)
+        Library.OriginalMinSize = Vector2.new(480, 360)
     end
 else
     pcall(function()
         Library.DevicePlatform = UserInputService:GetPlatform()
     end)
     Library.IsMobile = (Library.DevicePlatform == Enum.Platform.Android or Library.DevicePlatform == Enum.Platform.IOS)
-    Library.MinSize = Library.IsMobile and Vector2.new(480, 240) or Vector2.new(480, 360)
+    Library.OriginalMinSize = Library.IsMobile and Vector2.new(480, 240) or Vector2.new(480, 360)
 end
 
 local Templates = {
@@ -558,7 +559,7 @@ function Library:UpdateKeybindFrame()
         end
     end
 
-    Library.KeybindFrame.Size = UDim2.fromOffset(XSize + 18 * Library.DPIScale, 0)
+    Library.KeybindFrame.Size = UDim2.fromOffset((XSize + 18) * Library.DPIScale, 0)
 end
 function Library:UpdateDependencyBoxes()
     for _, Depbox in pairs(Library.DependencyBoxes) do
@@ -1036,7 +1037,7 @@ end
 
 function Library:SetDPIScale(DPIScale: number)
     Library.DPIScale = DPIScale / 100
-    Library.MinSize *= Library.DPIScale
+    Library.MinSize = Library.OriginalMinSize * Library.DPIScale
 
     for Instance, Properties in pairs(Library.DPIRegistry) do
         for Property, Value in pairs(Properties) do
@@ -1517,14 +1518,32 @@ function Library:MakeLine(Frame: GuiObject, Info)
         BackgroundColor3 = "OutlineColor",
         Position = Info.Position,
         Size = Info.Size,
-        ZIndex = Info.ZIndex or 1,
+        ZIndex = Info.ZIndex or Frame.ZIndex,
         Parent = Frame,
     })
 
     return Line
 end
 
+function Library:AddOutline(Frame: GuiObject)
+    local OutlineStroke = New("UIStroke", {
+        Color = "OutlineColor",
+        Thickness = 1,
+        ZIndex = 2,
+        Parent = Frame,
+    })	
+    local ShadowStroke = New("UIStroke", {
+        Color = "Dark",
+        Thickness = 2,
+        ZIndex = 1,
+        Parent = Frame,
+    })
+    return OutlineStroke, ShadowStroke
+end
+
+--// Deprecated \\--
 function Library:MakeOutline(Frame: GuiObject, Corner: number?, ZIndex: number?)
+	warn("Obsidian:MakeOutline is deprecated, please use Obsidian:AddOutline instead.")
     local Holder = New("Frame", {
         BackgroundColor3 = "Dark",
         Position = UDim2.fromOffset(-2, -2),
@@ -1555,6 +1574,52 @@ function Library:MakeOutline(Frame: GuiObject, Corner: number?, ZIndex: number?)
     return Holder, Outline
 end
 
+function Library:AddDraggableLabel(Text: string)
+    local Table = {}
+
+    local Label = New("TextLabel", {
+        AutomaticSize = Enum.AutomaticSize.XY,
+        BackgroundColor3 = "BackgroundColor",
+        Size = UDim2.fromOffset(0, 0),
+        Position = UDim2.fromOffset(6, 6),
+        Text = Text,
+        TextSize = 15,
+        ZIndex = 10,
+        Parent = ScreenGui,
+
+        DPIExclude = {
+            Position = true,
+            Size = true,
+        }
+    })
+    New("UICorner", {
+        CornerRadius = UDim.new(0, Library.CornerRadius),
+        Parent = Label,
+    })
+    New("UIPadding", {
+        PaddingBottom = UDim.new(0, 6),
+        PaddingLeft = UDim.new(0, 12),
+        PaddingRight = UDim.new(0, 12),
+        PaddingTop = UDim.new(0, 6),
+        Parent = Label,
+    })
+    Library:AddOutline(Label)
+
+    Library:MakeDraggable(Label, Label, true)
+
+    Table.Label = Label
+
+    function Table:SetText(Text: string)
+        Label.Text = Text
+    end
+
+    function Table:SetVisible(Visible: boolean)
+        Label.Visible = Visible
+    end
+
+    return Table
+end
+
 function Library:AddDraggableButton(Text: string, Func)
     local Table = {}
 
@@ -1570,16 +1635,17 @@ function Library:AddDraggableButton(Text: string, Func)
         },
     })
     New("UICorner", {
-        CornerRadius = UDim.new(0, Library.CornerRadius - 1),
+        CornerRadius = UDim.new(0, Library.CornerRadius),
         Parent = Button,
     })
-    Library:MakeOutline(Button, Library.CornerRadius, 9)
+    Library:AddOutline(Button)
 
-    Table.Button = Button
     Button.MouseButton1Click:Connect(function()
         Library:SafeCallback(Func, Table)
     end)
     Library:MakeDraggable(Button, Button, true)
+
+    Table.Button = Button
 
     function Table:SetText(NewText: string)
         local X, Y = Library:GetTextBounds(NewText, Library.Scheme.Font, 16)
@@ -1596,25 +1662,24 @@ function Library:AddDraggableButton(Text: string, Func)
 end
 
 function Library:AddDraggableMenu(Name: string)
-    local Background = Library:MakeOutline(ScreenGui, Library.CornerRadius, 10)
-    Background.AutomaticSize = Enum.AutomaticSize.Y
-    Background.Position = UDim2.fromOffset(6, 6)
-    Background.Size = UDim2.fromOffset(0, 0)
-    Library:UpdateDPI(Background, {
+    local Holder = New("Frame", {
+        AutomaticSize = Enum.AutomaticSize.Y,
+        BackgroundColor3 = "BackgroundColor",
+        Position = UDim2.fromOffset(6, 6),
+        Size = UDim2.fromOffset(0, 0),
+        ZIndex = 10,
+        Parent = ScreenGui,
+    })
+    New("UICorner", {
+        CornerRadius = UDim.new(0, Library.CornerRadius),
+        Parent = Holder,
+    })
+    Library:AddOutline(Holder)
+    Library:UpdateDPI(Holder, {
         Position = false,
         Size = false,
     })
 
-    local Holder = New("Frame", {
-        BackgroundColor3 = "BackgroundColor",
-        Position = UDim2.fromOffset(2, 2),
-        Size = UDim2.new(1, -4, 1, -4),
-        Parent = Background,
-    })
-    New("UICorner", {
-        CornerRadius = UDim.new(0, Library.CornerRadius - 1),
-        Parent = Holder,
-    })
     Library:MakeLine(Holder, {
         Position = UDim2.fromOffset(0, 34),
         Size = UDim2.new(1, 0, 0, 1),
@@ -1652,70 +1717,23 @@ function Library:AddDraggableMenu(Name: string)
         Parent = Container,
     })
 
-    Library:MakeDraggable(Background, Label, true)
-    return Background, Container
+    Library:MakeDraggable(Holder, Label, true)
+    return Holder, Container
 end
 
---// Watermark \\--
+--// Watermark - Deprecated \\--
 do
-    local WatermarkBackground = Library:MakeOutline(ScreenGui, Library.CornerRadius, 10)
-    WatermarkBackground.AutomaticSize = Enum.AutomaticSize.Y
-    WatermarkBackground.Position = UDim2.fromOffset(6, 6)
-    WatermarkBackground.Size = UDim2.fromOffset(0, 0)
-    WatermarkBackground.Visible = false
+    local WatermarkLabel = Library:AddDraggableLabel("")
+    WatermarkLabel:SetVisible(false)
 
-    Library:UpdateDPI(WatermarkBackground, {
-        Position = false,
-        Size = false,
-    })
-
-    local Holder = New("Frame", {
-        BackgroundColor3 = "BackgroundColor",
-        Position = UDim2.fromOffset(2, 2),
-        Size = UDim2.new(1, -4, 1, -4),
-        Parent = WatermarkBackground,
-    })
-    New("UICorner", {
-        CornerRadius = UDim.new(0, Library.CornerRadius - 1),
-        Parent = Holder,
-    })
-
-    local WatermarkLabel = New("TextLabel", {
-        BackgroundTransparency = 1,
-        Size = UDim2.new(1, 0, 0, 32),
-        Position = UDim2.fromOffset(0, -8 * Library.DPIScale + 7),
-        Text = "",
-        TextSize = 15,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        Parent = Holder,
-    })
-    New("UIPadding", {
-        PaddingLeft = UDim.new(0, 12),
-        PaddingRight = UDim.new(0, 12),
-        Parent = WatermarkLabel,
-    })
-
-    Library:MakeDraggable(WatermarkBackground, WatermarkLabel, true)
-
-    local function ResizeWatermark()
-        local X, Y = Library:GetTextBounds(WatermarkLabel.Text, Library.Scheme.Font, 15)
-        WatermarkBackground.Size = UDim2.fromOffset((12 + X + 12 + 4) * Library.DPIScale, Y + 12 + 4)
-        Library:UpdateDPI(WatermarkBackground, {
-            Size = UDim2.fromOffset(12 + X + 12 + 4, Y + 12 + 4),
-        })
-        WatermarkLabel.Size = UDim2.new(1, 0, 0, WatermarkBackground.Size.Y.Offset)
+    function Library:SetWatermark(Text: string)
+        warn("Watermark is deprecated, please use Library:AddDraggableLabel instead.")
+        WatermarkLabel:SetText(Text)
     end
 
     function Library:SetWatermarkVisibility(Visible: boolean)
-        WatermarkBackground.Visible = Visible
-        if Visible then
-            ResizeWatermark()
-        end
-    end
-
-    function Library:SetWatermark(Text: string)
-        WatermarkLabel.Text = Text
-        ResizeWatermark()
+        warn("Watermark is deprecated, please use Library:AddDraggableLabel instead.")
+        WatermarkLabel:SetVisible(Visible)
     end
 end
 
@@ -1905,7 +1923,7 @@ TooltipLabel:GetPropertyChangedSignal("AbsolutePosition"):Connect(function()
         workspace.CurrentCamera.ViewportSize.X - TooltipLabel.AbsolutePosition.X - 4
     )
 
-    TooltipLabel.Size = UDim2.fromOffset(X + 8 * Library.DPIScale, Y + 4 * Library.DPIScale)
+    TooltipLabel.Size = UDim2.fromOffset((X + 8) * Library.DPIScale, (Y + 4) * Library.DPIScale)
     Library:UpdateDPI(TooltipLabel, {
         Size = UDim2.fromOffset(X, Y),
         DPIOffset = {
@@ -2373,7 +2391,7 @@ do
                 ToggleLabel.AbsoluteSize.X
             )
             Picker.Text = PickerText or KeyPicker.DisplayValue
-            Picker.Size = UDim2.fromOffset(X + 9 * Library.DPIScale, Y + 4 * Library.DPIScale)
+            Picker.Size = UDim2.fromOffset((X + 9) * Library.DPIScale, (Y + 4) * Library.DPIScale)
         end
 
         function KeyPicker:Update()
@@ -3226,7 +3244,7 @@ do
             if Label.DoesWrap then
                 local _, Y =
                     Library:GetTextBounds(Label.Text, TextLabel.FontFace, TextLabel.TextSize, TextLabel.AbsoluteSize.X)
-                TextLabel.Size = UDim2.new(1, 0, 0, Y + 4 * Library.DPIScale)
+                TextLabel.Size = UDim2.new(1, 0, 0, (Y + 4) * Library.DPIScale)
             end
 
             Groupbox:Resize()
@@ -3235,7 +3253,7 @@ do
         if Label.DoesWrap then
             local _, Y =
                 Library:GetTextBounds(Label.Text, TextLabel.FontFace, TextLabel.TextSize, TextLabel.AbsoluteSize.X)
-            TextLabel.Size = UDim2.new(1, 0, 0, Y + 4 * Library.DPIScale)
+            TextLabel.Size = UDim2.new(1, 0, 0, (Y + 4) * Library.DPIScale)
         else
             New("UIListLayout", {
                 FillDirection = Enum.FillDirection.Horizontal,
@@ -3255,7 +3273,7 @@ do
 
                 local _, Y =
                     Library:GetTextBounds(Label.Text, TextLabel.FontFace, TextLabel.TextSize, TextLabel.AbsoluteSize.X)
-                TextLabel.Size = UDim2.new(1, 0, 0, Y + 4 * Library.DPIScale)
+                TextLabel.Size = UDim2.new(1, 0, 0, (Y + 4) * Library.DPIScale)
 
                 Last = TextLabel.AbsoluteSize
                 Groupbox:Resize()
@@ -5598,26 +5616,23 @@ do
         local Tab = Groupbox.Tab
         local BoxHolder = Groupbox.BoxHolder
 
-        local Background = Library:MakeOutline(BoxHolder, Library.CornerRadius)
-        Background.Size = UDim2.fromScale(1, 0)
-        Background.Visible = false
-        Library:UpdateDPI(Background, {
-            Size = false,
-        })
-
         local DepGroupboxContainer
         local DepGroupboxList
 
         do
             DepGroupboxContainer = New("Frame", {
                 BackgroundColor3 = "BackgroundColor",
-                Position = UDim2.fromOffset(2, 2),
-                Size = UDim2.new(1, -4, 1, -4),
-                Parent = Background,
+                Size = UDim2.fromScale(1, 0),
+                Visible = false,
+                Parent = BoxHolder,
             })
             New("UICorner", {
-                CornerRadius = UDim.new(0, Library.CornerRadius - 1),
+                CornerRadius = UDim.new(0, Library.CornerRadius),
                 Parent = DepGroupboxContainer,
+            })
+            Library:AddOutline(DepGroupboxContainer)
+            Library:UpdateDPI(DepGroupboxContainer, {
+                Size = false,
             })
 
             DepGroupboxList = New("UIListLayout", {
@@ -5638,7 +5653,7 @@ do
             Dependencies = {},
 
             BoxHolder = BoxHolder,
-            Holder = Background,
+            Holder = DepGroupboxContainer,
             Container = DepGroupboxContainer,
 
             Tab = Tab,
@@ -5647,7 +5662,7 @@ do
         }
 
         local function ResizeDepGroupbox()
-            Background.Size = UDim2.new(1, 0, 0, DepGroupboxList.AbsoluteContentSize.Y + 18 * Library.DPIScale)
+            DepGroupboxContainer.Size = UDim2.new(1, 0, 0, (DepGroupboxList.AbsoluteContentSize.Y + 18) * Library.DPIScale)
         end
 
         function DepGroupbox:Resize() task.defer(ResizeDepGroupbox) end
@@ -5658,19 +5673,19 @@ do
                 local Value = Dependency[2]
 
                 if Element.Type == "Toggle" and Element.Value ~= Value then
-                    Background.Visible = false
+                    DepGroupboxContainer.Visible = false
                     DepGroupbox.Visible = false
                     return
                 elseif Element.Type == "Dropdown" then
                     if typeof(Element.Value) == "table" then
                         if not Element.Value[Value] then
-                            Background.Visible = false
+                            DepGroupboxContainer.Visible = false
                             DepGroupbox.Visible = false
                             return
                         end
                     else
                         if Element.Value ~= Value then
-                            Background.Visible = false
+                            DepGroupboxContainer.Visible = false
                             DepGroupbox.Visible = false
                             return
                         end
@@ -5680,7 +5695,7 @@ do
 
             DepGroupbox.Visible = true
             if not Library.Searching then
-                Background.Visible = true
+                DepGroupboxContainer.Visible = true
                 DepGroupbox:Resize()
             elseif not CancelSearch then
                 Library:UpdateSearch(Library.SearchText)
@@ -5776,23 +5791,21 @@ function Library:Notify(...)
         },
     })
 
-    local Background = Library:MakeOutline(FakeBackground, Library.CornerRadius, 5)
-    Background.AutomaticSize = Enum.AutomaticSize.Y
-    Background.Position = Library.NotifySide:lower() == "left" and UDim2.new(-1, -6, 0, -2) or UDim2.new(1, 6, 0, -2)
-    Background.Size = UDim2.fromScale(1, 0)
-    Library:UpdateDPI(Background, {
-        Position = false,
-        Size = false,
-    })
-
     local Holder = New("Frame", {
+        AutomaticSize = Enum.AutomaticSize.Y,
         BackgroundColor3 = "MainColor",
-        Position = UDim2.fromOffset(2, 2),
-        Size = UDim2.new(1, -4, 1, -4),
-        Parent = Background,
+        Position = Library.NotifySide:lower() == "left" and UDim2.new(-1, -8, 0, -2) or UDim2.new(1, 8, 0, -2),
+        Size = UDim2.fromScale(1, 1),
+        ZIndex = 5,
+        Parent = FakeBackground,
+
+        DPIExclude = {
+            Position = true,
+            Size = true,
+        }
     })
     New("UICorner", {
-        CornerRadius = UDim.new(0, Library.CornerRadius - 1),
+        CornerRadius = UDim.new(0, Library.CornerRadius),
         Parent = Holder,
     })
     New("UIListLayout", {
@@ -5806,6 +5819,7 @@ function Library:Notify(...)
         PaddingTop = UDim.new(0, 8),
         Parent = Holder,
     })
+    Library:AddOutline(Holder)
 
     local Title
     local Desc
@@ -5905,13 +5919,14 @@ function Library:Notify(...)
         end
 
         TweenService
-            :Create(Background, Library.NotifyTweenInfo, {
-                Position = Library.NotifySide:lower() == "left" and UDim2.new(-1, -6, 0, -2) or UDim2.new(1, 6, 0, -2),
+            :Create(Holder, Library.NotifyTweenInfo, {
+                Position = Library.NotifySide:lower() == "left" and UDim2.new(-1, -8, 0, -2) or UDim2.new(1, 8, 0, -2),
             })
             :Play()
         
         task.delay(Library.NotifyTweenInfo.Time, function()
             Library.Notifications[FakeBackground] = nil
+            task.wait(10)
             FakeBackground:Destroy()
         end)
     end
@@ -5958,8 +5973,8 @@ function Library:Notify(...)
     Library.Notifications[FakeBackground] = Data
 
     FakeBackground.Visible = true
-    TweenService:Create(Background, Library.NotifyTweenInfo, {
-        Position = UDim2.fromOffset(-2, -2),
+    TweenService:Create(Holder, Library.NotifyTweenInfo, {
+        Position = UDim2.fromOffset(0, 0),
     }):Play()
 
     task.delay(Library.NotifyTweenInfo.Time, function()
@@ -5999,7 +6014,9 @@ function Library:CreateWindow(WindowInfo)
     local MaxX = ViewportSize.X - 64
     local MaxY = ViewportSize.Y - 64
 
-    Library.MinSize = Vector2.new(math.min(Library.MinSize.X, MaxX), math.min(Library.MinSize.Y, MaxY))
+    Library.OriginalMinSize = Vector2.new(math.min(Library.OriginalMinSize.X, MaxX), math.min(Library.OriginalMinSize.Y, MaxY))
+    Library.MinSize = Library.OriginalMinSize
+
     WindowInfo.Size = UDim2.fromOffset(
         math.clamp(WindowInfo.Size.X.Offset, Library.MinSize.X, MaxX),
         math.clamp(WindowInfo.Size.Y.Offset, Library.MinSize.Y, MaxY)
@@ -6070,7 +6087,7 @@ function Library:CreateWindow(WindowInfo)
         TabLabels = {},
     }
 
-    local MoveReservedWidth = (MoveIcon and 28 + 10) or 0
+    local MoveReservedWidth = (MoveIcon and 28 + 12) or 0
 
     local SidebarDrag = {
         Active = false,
@@ -6229,10 +6246,6 @@ function Library:CreateWindow(WindowInfo)
         Library.KeybindFrame.AnchorPoint = Vector2.new(0, 0.5)
         Library.KeybindFrame.Position = UDim2.new(0, 6, 0.5, 0)
         Library.KeybindFrame.Visible = false
-        Library:UpdateDPI(Library.KeybindFrame, {
-            Position = false,
-            Size = false,
-        })
 
         MainFrame = New("TextButton", {
             BackgroundColor3 = function()
@@ -6250,9 +6263,11 @@ function Library:CreateWindow(WindowInfo)
             },
         })
         New("UICorner", {
-            CornerRadius = UDim.new(0, WindowInfo.CornerRadius - 1),
+            CornerRadius = UDim.new(0, WindowInfo.CornerRadius),
             Parent = MainFrame,
         })
+        Library:AddOutline(MainFrame)
+
         local InitialSidebarWidth = GetSidebarWidth()
         LayoutRefs.DividerLine = Library:MakeLine(MainFrame, {
             Position = UDim2.new(0, InitialSidebarWidth, 0, 0),
@@ -6274,7 +6289,6 @@ function Library:CreateWindow(WindowInfo)
         for _, Info in pairs(Lines) do
             Library:MakeLine(MainFrame, Info)
         end
-        Library:MakeOutline(MainFrame, WindowInfo.CornerRadius, 0)
 
         if WindowInfo.BackgroundImage then
             New("ImageLabel", {
@@ -6498,7 +6512,7 @@ function Library:CreateWindow(WindowInfo)
             })
         end
         New("UICorner", {
-            CornerRadius = UDim.new(0, WindowInfo.CornerRadius - 1),
+            CornerRadius = UDim.new(0, WindowInfo.CornerRadius),
             Parent = BottomBar,
         })
 
@@ -6525,7 +6539,6 @@ function Library:CreateWindow(WindowInfo)
             })
 
             Library:MakeResizable(MainFrame, ResizeButton, function()
-                EnsureSidebarBounds()
                 ApplySidebarLayout()
                 for _, Tab in pairs(Library.Tabs) do
                     Tab:Resize(true)
@@ -6543,11 +6556,6 @@ function Library:CreateWindow(WindowInfo)
             Size = UDim2.new(1, -4, 1, -4),
             Parent = ResizeButton,
         })
-
-        MainFrame:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
-            EnsureSidebarBounds()
-            ApplySidebarLayout()
-        end)
 
         --// Tabs \\--
         Tabs = New("ScrollingFrame", {
@@ -6689,10 +6697,7 @@ function Library:CreateWindow(WindowInfo)
             SetSidebarHighlight(false)
         end
 
-        task.defer(function()
-            EnsureSidebarBounds()
-            ApplySidebarLayout()
-        end)
+        task.defer(ApplySidebarLayout)
     end
 
     --// Window Table \\--
@@ -6820,6 +6825,13 @@ function Library:CreateWindow(WindowInfo)
                 Padding = UDim.new(0, 6),
                 Parent = TabLeft,
             })
+            New("UIPadding", {
+                PaddingBottom = UDim.new(0, 2),
+                PaddingLeft = UDim.new(0, 2),
+                PaddingRight = UDim.new(0, 2),
+                PaddingTop = UDim.new(0, 2),
+                Parent = TabLeft,
+            })
             do
                 New("Frame", {
                     BackgroundTransparency = 1,
@@ -6849,6 +6861,13 @@ function Library:CreateWindow(WindowInfo)
                 Padding = UDim.new(0, 6),
                 Parent = TabRight,
             })
+            New("UIPadding", {
+                PaddingBottom = UDim.new(0, 2),
+                PaddingLeft = UDim.new(0, 2),
+                PaddingRight = UDim.new(0, 2),
+                PaddingTop = UDim.new(0, 2),
+                Parent = TabRight,
+            })
             do
                 New("Frame", {
                     BackgroundTransparency = 1,
@@ -6868,90 +6887,88 @@ function Library:CreateWindow(WindowInfo)
 
         --// Warning Box \\--
 		local WarningBoxHolder = New("Frame", {
-		    AutomaticSize = Enum.AutomaticSize.Y,
-		    BackgroundTransparency = 1,
-		    Position = UDim2.fromOffset(2, 6),
-		    Size = UDim2.fromScale(1, 0),
-		    Visible = false,
-		    Parent = TabContainer
-		})
-
-		local WarningBoxBackground, WarningBoxOutline = Library:MakeOutline(WarningBoxHolder, WindowInfo.CornerRadius)
-		WarningBoxBackground.Size = UDim2.fromScale(1, 0)
-		Library:UpdateDPI(WarningBoxBackground, {
-		    Size = false,
+			AutomaticSize = Enum.AutomaticSize.Y,
+			BackgroundTransparency = 1,
+			Position = UDim2.fromOffset(0, 6),
+			Size = UDim2.fromScale(1, 0),
+			Visible = false,
+			Parent = TabContainer
 		})
 
 		local WarningBox
+        local WarningBoxOutline
+        local WarningBoxShadowOutline
 		local WarningBoxScrollingFrame
 		local WarningTitle
 		local WarningStroke
 		local WarningText
 		do
-		    WarningBox = New("Frame", {
-		        BackgroundColor3 = "BackgroundColor",
-		        Position = UDim2.fromOffset(2, 2),
-		        Size = UDim2.new(1, -4, 0, 100),
-		        Parent = WarningBoxBackground,
-		    })
-		    New("UICorner", {
-		        CornerRadius = UDim.new(0, WindowInfo.CornerRadius - 1),
-		        Parent = WarningBox,
-		    })
-		    
-		    WarningBoxScrollingFrame = New("ScrollingFrame", {
-		        BackgroundTransparency = 1,
-		        BorderSizePixel = 0,
-		        Size = UDim2.fromScale(1, 1),
-		        CanvasSize = UDim2.new(0, 0, 0, 0),
-		        ScrollBarThickness = 3,
-		        ScrollingDirection = Enum.ScrollingDirection.Y,
-		        Parent = WarningBox,
-		    })
-		    
-		    New("UIPadding", {
-		        PaddingBottom = UDim.new(0, 4),
-		        PaddingLeft = UDim.new(0, 6),
-		        PaddingRight = UDim.new(0, 6),
-		        PaddingTop = UDim.new(0, 4),
-		        Parent = WarningBoxScrollingFrame,
-		    })
-		    
-		    WarningTitle = New("TextLabel", {
-		        BackgroundTransparency = 1,
-		        Size = UDim2.new(1, -4, 0, 14),
-		        Text = "",
-		        TextColor3 = Color3.fromRGB(255, 50, 50),
-		        TextSize = 14,
-		        TextXAlignment = Enum.TextXAlignment.Left,
-		        Parent = WarningBoxScrollingFrame,
-		    })
-		    
-		    WarningStroke = New("UIStroke", {
-		        ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual,
-		        Color = Color3.fromRGB(169, 0, 0),
-		        LineJoinMode = Enum.LineJoinMode.Miter,
-		        Parent = WarningTitle,
-		    })
-		    
-		    WarningText = New("TextLabel", {
-		        BackgroundTransparency = 1,
-		        Position = UDim2.fromOffset(0, 16),
-		        Size = UDim2.new(1, -4, 0, 0),
-		        Text = "",
-		        TextSize = 14,
-		        TextWrapped = true,
-		        Parent = WarningBoxScrollingFrame,
-		        TextXAlignment = Enum.TextXAlignment.Left,
-		        TextYAlignment = Enum.TextYAlignment.Top,
-		    })
-		    
-		    New("UIStroke", {
-		        ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual,
-		        Color = "Dark",
-		        LineJoinMode = Enum.LineJoinMode.Miter,
-		        Parent = WarningText,
-		    })
+            WarningBox = New("Frame", {
+				BackgroundColor3 = "BackgroundColor",
+				Size = UDim2.fromScale(1, 0),
+				Parent = WarningBoxHolder,
+			})
+			New("UICorner", {
+				CornerRadius = UDim.new(0, WindowInfo.CornerRadius),
+				Parent = WarningBox,
+			})
+            WarningBoxOutline, WarningBoxShadowOutline = Library:AddOutline(WarningBox)
+            Library:UpdateDPI(WarningBox, {
+                Size = false,
+            })
+			
+			WarningBoxScrollingFrame = New("ScrollingFrame", {
+				BackgroundTransparency = 1,
+				BorderSizePixel = 0,
+				Size = UDim2.fromScale(1, 1),
+				CanvasSize = UDim2.new(0, 0, 0, 0),
+				ScrollBarThickness = 3,
+				ScrollingDirection = Enum.ScrollingDirection.Y,
+				Parent = WarningBox,
+			})
+			New("UIPadding", {
+				PaddingBottom = UDim.new(0, 4),
+				PaddingLeft = UDim.new(0, 6),
+				PaddingRight = UDim.new(0, 6),
+				PaddingTop = UDim.new(0, 4),
+				Parent = WarningBoxScrollingFrame,
+			})
+			
+			WarningTitle = New("TextLabel", {
+				BackgroundTransparency = 1,
+				Size = UDim2.new(1, -4, 0, 14),
+				Text = "",
+				TextColor3 = Color3.fromRGB(255, 50, 50),
+				TextSize = 14,
+				TextXAlignment = Enum.TextXAlignment.Left,
+				Parent = WarningBoxScrollingFrame,
+			})
+			
+			WarningStroke = New("UIStroke", {
+				ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual,
+				Color = Color3.fromRGB(169, 0, 0),
+				LineJoinMode = Enum.LineJoinMode.Miter,
+				Parent = WarningTitle,
+			})
+			
+			WarningText = New("TextLabel", {
+				BackgroundTransparency = 1,
+				Position = UDim2.fromOffset(0, 16),
+				Size = UDim2.new(1, -4, 0, 0),
+				Text = "",
+				TextSize = 14,
+				TextWrapped = true,
+				Parent = WarningBoxScrollingFrame,
+				TextXAlignment = Enum.TextXAlignment.Left,
+				TextYAlignment = Enum.TextYAlignment.Top,
+			})
+			
+			New("UIStroke", {
+				ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual,
+				Color = "Dark",
+				LineJoinMode = Enum.LineJoinMode.Miter,
+				Parent = WarningText,
+			})
 		end
 
         --// Tab Table \\--
@@ -6973,117 +6990,115 @@ function Library:CreateWindow(WindowInfo)
         }
 
         function Tab:UpdateWarningBox(Info)
-		    if typeof(Info.IsNormal) == "boolean" then
-		        Tab.WarningBox.IsNormal = Info.IsNormal
-		    end
-		    if typeof(Info.LockSize) == "boolean" then
-		        Tab.WarningBox.LockSize = Info.LockSize
-		    end
-		    if typeof(Info.Visible) == "boolean" then
-		        Tab.WarningBox.Visible = Info.Visible
-		    end
-		    if typeof(Info.Title) == "string" then
-		        Tab.WarningBox.Title = Info.Title
-		    end
-		    if typeof(Info.Text) == "string" then
-		        Tab.WarningBox.Text = Info.Text
-		    end
+			if typeof(Info.IsNormal) == "boolean" then
+				Tab.WarningBox.IsNormal = Info.IsNormal
+			end
+			if typeof(Info.LockSize) == "boolean" then
+				Tab.WarningBox.LockSize = Info.LockSize
+			end
+			if typeof(Info.Visible) == "boolean" then
+				Tab.WarningBox.Visible = Info.Visible
+			end
+			if typeof(Info.Title) == "string" then
+				Tab.WarningBox.Title = Info.Title
+			end
+			if typeof(Info.Text) == "string" then
+				Tab.WarningBox.Text = Info.Text
+			end
 
-		    WarningBoxHolder.Visible = Tab.WarningBox.Visible
-		    WarningTitle.Text = Tab.WarningBox.Title
-		    WarningText.Text = Tab.WarningBox.Text
-		    Tab:Resize(true)
+			WarningBoxHolder.Visible = Tab.WarningBox.Visible
+			WarningTitle.Text = Tab.WarningBox.Title
+			WarningText.Text = Tab.WarningBox.Text
+			Tab:Resize(true)
 
-		    WarningBox.BackgroundColor3 = Tab.WarningBox.IsNormal == true and Library.Scheme.BackgroundColor
-		        or Color3.fromRGB(127, 0, 0)
+			WarningBox.BackgroundColor3 = Tab.WarningBox.IsNormal == true and Library.Scheme.BackgroundColor
+				or Color3.fromRGB(127, 0, 0)
 
-		    WarningBoxBackground.BackgroundColor3 = Tab.WarningBox.IsNormal == true and Library.Scheme.Dark
-		        or Color3.fromRGB(169, 0, 0)
-	        WarningBoxOutline.BackgroundColor3 = Tab.WarningBox.IsNormal == true and Library.Scheme.OutlineColor
-	            or Color3.fromRGB(255, 50, 50)
-		    
-		    WarningTitle.TextColor3 = Tab.WarningBox.IsNormal == true and Library.Scheme.FontColor
-		        or Color3.fromRGB(255, 50, 50)
-		    WarningStroke.Color = Tab.WarningBox.IsNormal == true and Library.Scheme.OutlineColor
-		        or Color3.fromRGB(169, 0, 0)
+			WarningBoxShadowOutline.Color = Tab.WarningBox.IsNormal == true and Library.Scheme.Dark
+				or Color3.fromRGB(169, 0, 0)
+			WarningBoxOutline.Color = Tab.WarningBox.IsNormal == true and Library.Scheme.OutlineColor
+				or Color3.fromRGB(255, 50, 50)
+			
+			WarningTitle.TextColor3 = Tab.WarningBox.IsNormal == true and Library.Scheme.FontColor
+				or Color3.fromRGB(255, 50, 50)
+			WarningStroke.Color = Tab.WarningBox.IsNormal == true and Library.Scheme.OutlineColor
+				or Color3.fromRGB(169, 0, 0)
 
-		    if not Library.Registry[WarningBox] then
-		        Library:AddToRegistry(WarningBox, {})
-		    end
-		    if not Library.Registry[WarningBoxBackground] then
-		        Library:AddToRegistry(WarningBoxBackground, {})
-		    end
-		    if not Library.Registry[WarningBoxOutline] then
-		        Library:AddToRegistry(WarningBoxOutline, {})
-		    end
-		    if not Library.Registry[WarningTitle] then
-		        Library:AddToRegistry(WarningTitle, {})
-		    end
-		    if not Library.Registry[WarningStroke] then
-		        Library:AddToRegistry(WarningStroke, {})
-		    end
+			if not Library.Registry[WarningBox] then
+				Library:AddToRegistry(WarningBox, {})
+			end
+			if not Library.Registry[WarningBoxShadowOutline] then
+				Library:AddToRegistry(WarningBoxShadowOutline, {})
+			end
+			if not Library.Registry[WarningBoxOutline] then
+				Library:AddToRegistry(WarningBoxOutline, {})
+			end
+			if not Library.Registry[WarningTitle] then
+				Library:AddToRegistry(WarningTitle, {})
+			end
+			if not Library.Registry[WarningStroke] then
+				Library:AddToRegistry(WarningStroke, {})
+			end
 
-		    Library.Registry[WarningBox].BackgroundColor3 = function()
-		        return Tab.WarningBox.IsNormal == true and Library.Scheme.BackgroundColor or Color3.fromRGB(127, 0, 0)
-		    end
+			Library.Registry[WarningBox].BackgroundColor3 = function()
+				return Tab.WarningBox.IsNormal == true and Library.Scheme.BackgroundColor or Color3.fromRGB(127, 0, 0)
+			end
 
-		    Library.Registry[WarningBoxBackground].BackgroundColor3 = function()
-		        return Tab.WarningBox.IsNormal == true and Library.Scheme.Dark or Color3.fromRGB(169, 0, 0)
-		    end
-		    
-	        Library.Registry[WarningBoxOutline].BackgroundColor3 = function()
-	            return Tab.WarningBox.IsNormal == true and Library.Scheme.OutlineColor or Color3.fromRGB(255, 50, 50)
-	        end
+			Library.Registry[WarningBoxShadowOutline].Color = function()
+				return Tab.WarningBox.IsNormal == true and Library.Scheme.Dark or Color3.fromRGB(169, 0, 0)
+			end
+			
+			Library.Registry[WarningBoxOutline].Color = function()
+				return Tab.WarningBox.IsNormal == true and Library.Scheme.OutlineColor or Color3.fromRGB(255, 50, 50)
+			end
 
-		    Library.Registry[WarningTitle].TextColor3 = function()
-		        return Tab.WarningBox.IsNormal == true and Library.Scheme.FontColor or Color3.fromRGB(255, 50, 50)
-		    end
+			Library.Registry[WarningTitle].TextColor3 = function()
+				return Tab.WarningBox.IsNormal == true and Library.Scheme.FontColor or Color3.fromRGB(255, 50, 50)
+			end
 
-		    Library.Registry[WarningStroke].Color = function()
-		        return Tab.WarningBox.IsNormal == true and Library.Scheme.OutlineColor or Color3.fromRGB(169, 0, 0)
-		    end
+			Library.Registry[WarningStroke].Color = function()
+				return Tab.WarningBox.IsNormal == true and Library.Scheme.OutlineColor or Color3.fromRGB(169, 0, 0)
+			end
 		end
 
         function Tab:RefreshSides()
-		    local Offset = WarningBoxHolder.Visible and WarningBoxBackground.AbsoluteSize.Y + 6 or 0
-		    for _, Side in pairs(Tab.Sides) do
-		        Side.Position = UDim2.new(Side.Position.X.Scale, 0, 0, Offset)
-		        Side.Size = UDim2.new(0, math.floor(TabContainer.AbsoluteSize.X / 2) - 3, 1, -Offset)
-		        Library:UpdateDPI(Side, {
-		            Position = Side.Position,
-		            Size = Side.Size,
-		        })
-		    end
+			local Offset = WarningBoxHolder.Visible and WarningBox.AbsoluteSize.Y + 6 or 0
+			for _, Side in pairs(Tab.Sides) do
+				Side.Position = UDim2.new(Side.Position.X.Scale, 0, 0, Offset)
+				Side.Size = UDim2.new(0, math.floor(TabContainer.AbsoluteSize.X / 2) - 3, 1, -Offset)
+				Library:UpdateDPI(Side, {
+					Position = Side.Position,
+					Size = Side.Size,
+				})
+			end
 		end
 
         function Tab:Resize(ResizeWarningBox: boolean?)
-		    if ResizeWarningBox then
-		        local MaximumSize = math.floor(TabContainer.AbsoluteSize.Y / 3.25)
-		        local _, YText = Library:GetTextBounds(
-		            WarningText.Text,
-		            Library.Scheme.Font,
-		            WarningText.TextSize,
-		            WarningText.AbsoluteSize.X
-		        )
+			if ResizeWarningBox then
+				local MaximumSize = math.floor(TabContainer.AbsoluteSize.Y / 3.25)
+				local _, YText = Library:GetTextBounds(
+					WarningText.Text,
+					Library.Scheme.Font,
+					WarningText.TextSize,
+					WarningText.AbsoluteSize.X
+				)
 
-		        local YBox = 24 + YText
-		        if Tab.WarningBox.LockSize == true and YBox >= MaximumSize then
-		            WarningBoxScrollingFrame.CanvasSize = UDim2.fromOffset(0, YBox)
-		            YBox = MaximumSize
-		        else
-		            WarningBoxScrollingFrame.CanvasSize = UDim2.fromOffset(0, 0)
-		        end
+				local YBox = 24 + YText
+				if Tab.WarningBox.LockSize == true and YBox >= MaximumSize then
+					WarningBoxScrollingFrame.CanvasSize = UDim2.fromOffset(0, YBox)
+					YBox = MaximumSize
+				else
+					WarningBoxScrollingFrame.CanvasSize = UDim2.fromOffset(0, 0)
+				end
 
-		        WarningText.Size = UDim2.new(1, -4, 0, YText)
-		        Library:UpdateDPI(WarningText, { Size = WarningText.Size })
+				WarningText.Size = UDim2.new(1, -4, 0, YText)
+				Library:UpdateDPI(WarningText, { Size = WarningText.Size })
 
-		        WarningBox.Size = UDim2.new(1, -4, 0, YBox)
-		        Library:UpdateDPI(WarningBox, { Size = WarningBox.Size })
+				WarningBox.Size = UDim2.new(1, 0, 0, (YBox + 4) * Library.DPIScale)
+                Library:UpdateDPI(WarningBox, { Size = WarningBox.Size })
+			end
 
-		        WarningBoxBackground.Size = UDim2.new(1, 0, 0, YBox + 4 * Library.DPIScale)
-		    end
-
-		    Tab:RefreshSides()
+			Tab:RefreshSides()
 		end
 
         function Tab:AddGroupbox(Info)
@@ -7098,12 +7113,6 @@ function Library:CreateWindow(WindowInfo)
                 Parent = BoxHolder,
             })
 
-            local Background = Library:MakeOutline(BoxHolder, WindowInfo.CornerRadius)
-            Background.Size = UDim2.fromScale(1, 0)
-            Library:UpdateDPI(Background, {
-                Size = false,
-            })
-
             local GroupboxHolder
             local GroupboxLabel
 
@@ -7113,14 +7122,18 @@ function Library:CreateWindow(WindowInfo)
             do
                 GroupboxHolder = New("Frame", {
                     BackgroundColor3 = "BackgroundColor",
-                    Position = UDim2.fromOffset(2, 2),
-                    Size = UDim2.new(1, -4, 1, -4),
-                    Parent = Background,
+                    Size = UDim2.fromScale(1, 0),
+                    Parent = BoxHolder,
                 })
                 New("UICorner", {
-                    CornerRadius = UDim.new(0, WindowInfo.CornerRadius - 1),
+                    CornerRadius = UDim.new(0, WindowInfo.CornerRadius),
                     Parent = GroupboxHolder,
                 })
+                Library:AddOutline(GroupboxHolder)
+                Library:UpdateDPI(GroupboxHolder, {
+                    Size = false,
+                })
+
                 Library:MakeLine(GroupboxHolder, {
                     Position = UDim2.fromOffset(0, 34),
                     Size = UDim2.new(1, 0, 0, 1),
@@ -7176,7 +7189,7 @@ function Library:CreateWindow(WindowInfo)
 
             local Groupbox = {
                 BoxHolder = BoxHolder,
-                Holder = Background,
+                Holder = GroupboxHolder,
                 Container = GroupboxContainer,
 
                 Tab = Tab,
@@ -7185,7 +7198,7 @@ function Library:CreateWindow(WindowInfo)
             }
 
             local function ResizeGroupbox()
-                Background.Size = UDim2.new(1, 0, 0, GroupboxList.AbsoluteContentSize.Y + 53 * Library.DPIScale)
+                GroupboxHolder.Size = UDim2.new(1, 0, 0, (GroupboxList.AbsoluteContentSize.Y + 53) * Library.DPIScale)
             end
 
             function Groupbox:Resize() task.defer(ResizeGroupbox) end
@@ -7218,25 +7231,22 @@ function Library:CreateWindow(WindowInfo)
                 Parent = BoxHolder,
             })
 
-            local Background = Library:MakeOutline(BoxHolder, WindowInfo.CornerRadius)
-            Background.Size = UDim2.fromScale(1, 0)
-            Library:UpdateDPI(Background, {
-                Size = false,
-            })
-
             local TabboxHolder
             local TabboxButtons
 
             do
                 TabboxHolder = New("Frame", {
                     BackgroundColor3 = "BackgroundColor",
-                    Position = UDim2.fromOffset(2, 2),
-                    Size = UDim2.new(1, -4, 1, -4),
-                    Parent = Background,
+                    Size = UDim2.fromScale(1, 0),
+                    Parent = BoxHolder,
                 })
                 New("UICorner", {
-                    CornerRadius = UDim.new(0, WindowInfo.CornerRadius - 1),
+                    CornerRadius = UDim.new(0, WindowInfo.CornerRadius),
                     Parent = TabboxHolder,
+                })
+                Library:AddOutline(TabboxHolder)
+                Library:UpdateDPI(TabboxHolder, {
+                    Size = false,
                 })
 
                 TabboxButtons = New("Frame", {
@@ -7255,7 +7265,7 @@ function Library:CreateWindow(WindowInfo)
                 ActiveTab = nil,
 
                 BoxHolder = BoxHolder,
-                Holder = Background,
+                Holder = TabboxHolder,
                 Tabs = {},
             }
 
@@ -7333,7 +7343,7 @@ function Library:CreateWindow(WindowInfo)
                         return
                     end
 
-                    Background.Size = UDim2.new(1, 0, 0, List.AbsoluteContentSize.Y + 53 * Library.DPIScale)
+                    TabboxHolder.Size = UDim2.new(1, 0, 0, (List.AbsoluteContentSize.Y + 53) * Library.DPIScale)
                 end
 
                 function Tab:Resize() task.defer(ResizeTab) end
