@@ -5926,7 +5926,6 @@ function Library:Notify(...)
         
         task.delay(Library.NotifyTweenInfo.Time, function()
             Library.Notifications[FakeBackground] = nil
-            task.wait(10)
             FakeBackground:Destroy()
         end)
     end
