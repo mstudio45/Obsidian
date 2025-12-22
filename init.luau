@@ -1,2 +1,4 @@
 local Library, Types = require("./obsidian/Library"), require("./obsidian/Library.d")
-return (Library :: any) :: Types.Library
+
+export type ObsidianLibrary = Types.Library
+return (Library :: any) :: ObsidianLibrary
