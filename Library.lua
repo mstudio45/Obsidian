@@ -3088,18 +3088,8 @@ do
             local _, Y =
                 Library:GetTextBounds(Label.Text, TextLabel.FontFace, TextLabel.TextSize, TextLabel.AbsoluteSize.X)
             TextLabel.Size = UDim2.new(1, 0, 0, Y + 4)
-        else
-            New("UIListLayout", {
-                FillDirection = Enum.FillDirection.Horizontal,
-                HorizontalAlignment = Enum.HorizontalAlignment.Right,
-                Padding = UDim.new(0, 6),
-                Parent = TextLabel,
-            })
-        end
 
-        if Data.DoesWrap then
             local Last = TextLabel.AbsoluteSize
-
             TextLabel:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
                 if TextLabel.AbsoluteSize == Last then
                     return
@@ -3112,6 +3102,13 @@ do
                 Last = TextLabel.AbsoluteSize
                 Groupbox:Resize()
             end)
+        else
+            New("UIListLayout", {
+                FillDirection = Enum.FillDirection.Horizontal,
+                HorizontalAlignment = Enum.HorizontalAlignment.Right,
+                Padding = UDim.new(0, 6),
+                Parent = TextLabel,
+            })
         end
 
         Groupbox:Resize()
@@ -5659,14 +5656,14 @@ function Library:Notify(...)
     function Data:Resize()
         if Title then
             local X, Y =
-                Library:GetTextBounds(Title.Text, Title.FontFace, Title.TextSize, NotificationArea.AbsoluteSize.X - 24)
+                Library:GetTextBounds(Title.Text, Title.FontFace, Title.TextSize, (NotificationArea.AbsoluteSize.X / Library.DPIScale) - 24)
             Title.Size = UDim2.fromOffset(0, Y)
             TitleX = X
         end
 
         if Desc then
             local X, Y =
-                Library:GetTextBounds(Desc.Text, Desc.FontFace, Desc.TextSize, NotificationArea.AbsoluteSize.X - 24)
+                Library:GetTextBounds(Desc.Text, Desc.FontFace, Desc.TextSize, (NotificationArea.AbsoluteSize.X / Library.DPIScale) - 24)
             Desc.Size = UDim2.fromOffset(0, Y)
             DescX = X
         end
