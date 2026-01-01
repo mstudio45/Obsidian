@@ -1011,7 +1011,7 @@ local function FillInstance(Table: { [string]: any }, Instance: GuiObject)
     local ThemeProperties = Library.Registry[Instance] or {}
 
     for k, v in Table do
-        if Library.Scheme[SchemeAlias[v]] ~= nil then
+        if typeof(v) == "string" and Library.Scheme[SchemeAlias[v]] ~= nil then
             Library.Scheme[v] = Library.Scheme[SchemeAlias[v]]
             Library.Scheme[SchemeAlias[v]] = nil
         end
