@@ -1002,10 +1002,20 @@ function Library:Validate(Table: { [string]: any }, Template: { [string]: any })
 end
 
 --// Creator Functions \\--
+local SchemeAlias = {
+    RedColor = "Red",
+    WhiteColor = "White",
+    DarkColor = "Dark",
+}
 local function FillInstance(Table: { [string]: any }, Instance: GuiObject)
     local ThemeProperties = Library.Registry[Instance] or {}
 
     for k, v in Table do
+        if Library.Scheme[SchemeAlias[v]] ~= nil then
+            Library.Scheme[v] = Library.Scheme[SchemeAlias[v]]
+            Library.Scheme[SchemeAlias[v]] = nil
+        end
+
         if ThemeProperties[k] then
             ThemeProperties[k] = nil
         elseif k ~= "Text" and (Library.Scheme[v] or typeof(v) == "function") then
