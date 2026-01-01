@@ -306,6 +306,7 @@ local Templates = {
         --// Snapping \\--
         MinSidebarWidth = 128,
         SidebarCompactWidth = 48,
+        SidebarCollapseThreshold = 0.5,
 
         --// Dragging \\--
         CompactWidthActivation = 128,
@@ -5812,8 +5813,16 @@ function Library:CreateWindow(WindowInfo)
         WindowInfo.Font = Font.fromEnum(WindowInfo.Font)
     end
 
+    --// Old Naming \\--
+    if WindowInfo.Compact ~= nil then
+        WindowInfo.SidebarCompacted = WindowInfo.Compact
+    end
+    if WindowInfo.SidebarMinWidth ~= nil then
+        WindowInfo.MinSidebarWidth = WindowInfo.SidebarMinWidth
+    end
     WindowInfo.MinSidebarWidth = math.max(64, WindowInfo.MinSidebarWidth)
     WindowInfo.SidebarCompactWidth = math.max(48, WindowInfo.SidebarCompactWidth)
+    WindowInfo.SidebarCollapseThreshold = math.clamp(WindowInfo.SidebarCollapseThreshold, 0.1, 0.9)
     WindowInfo.CompactWidthActivation = math.max(48, WindowInfo.CompactWidthActivation)
 
     Library.CornerRadius = WindowInfo.CornerRadius
@@ -7268,7 +7277,7 @@ function Library:CreateWindow(WindowInfo)
     end
 
     if WindowInfo.EnableSidebarResize then
-        local Threshold = (WindowInfo.MinSidebarWidth + WindowInfo.SidebarCompactWidth) / 2
+        local Threshold = (WindowInfo.MinSidebarWidth + WindowInfo.SidebarCompactWidth) * WindowInfo.SidebarCollapseThreshold
         local StartPos, StartWidth
         local Dragging = false
         local Changed
