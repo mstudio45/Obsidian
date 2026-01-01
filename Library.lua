@@ -5841,6 +5841,7 @@ function Library:CreateWindow(WindowInfo)
     local InitialLeftWidth = math.ceil(WindowInfo.Size.X.Offset * 0.3)
     local InitialRightWidth = math.ceil(WindowInfo.Size.X.Offset * 0.7 - 1)
     local IsCompact = WindowInfo.SidebarCompacted
+    local LastExpandedWidth = InitialLeftWidth
 
     do
         Library.KeybindFrame, Library.KeybindContainer = Library:AddDraggableMenu("Keybinds")
@@ -6194,10 +6195,6 @@ function Library:CreateWindow(WindowInfo)
     end
 
     local function ApplyCompact()
-        if not WindowInfo.EnableCompacting then
-            return
-        end
-
         IsCompact = Window:GetSidebarWidth() == WindowInfo.SidebarCompactWidth
         if WindowInfo.DisableCompactingSnap then
             IsCompact = Window:GetSidebarWidth() <= WindowInfo.CompactWidthActivation
@@ -6226,6 +6223,10 @@ function Library:CreateWindow(WindowInfo)
         return IsCompact
     end
 
+    function Window:SetCompact(State)
+        Window:SetSidebarWidth(State and WindowInfo.SidebarCompactWidth or LastExpandedWidth)
+    end
+
     function Window:GetSidebarWidth()
         return Tabs.Size.X.Offset
     end
@@ -6240,7 +6241,12 @@ function Library:CreateWindow(WindowInfo)
         Tabs.Size = UDim2.new(0, Width, 1, -70)
         Container.Size = UDim2.new(1, -Width - 1, 1, -70)
 
-        ApplyCompact()
+        if WindowInfo.EnableCompacting then
+            ApplyCompact()
+        end
+        if not IsCompact then
+            LastExpandedWidth = Width
+        end
     end
 
     function Window:ShowTabInfo(Name, Description)
