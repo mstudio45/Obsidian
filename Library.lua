@@ -459,7 +459,7 @@ local function GetSchemeValue(Index)
 
     local AliasIndex = SchemeAlias[Index]
     if AliasIndex and Library.Scheme[AliasIndex] ~= nil then
-        --// warn(string.format("Scheme Value %q is deprecated, please use %q instead.", Index, AliasIndex))
+        warn(string.format("Scheme Value %q is deprecated, please use %q instead.", Index, AliasIndex))
         return Library.Scheme[AliasIndex]
     end
 
