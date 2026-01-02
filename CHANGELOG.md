@@ -1,3 +1,31 @@
+## 30.12.2025
+
+```diff
+[breaking changes]
+! Library.Scheme:
+  .Red -> .RedColor
+  .Dark -> .DarkColor
+  .White -> .WhiteColor
+! WindowInfo.Compact -> WindowInfo.SidebarCompacted
+! WindowInfo.SidebarMinWidth -> WindowInfo.MinSidebarWidth
+! WindowInfo.MinContentWidth -> WindowInfo.MinContainerWidth
+- WindowInfo.SidebarCollapseThreshold
+- WindowInfo.SidebarHighlightCallback function
+- WindowInfo.InitialSidebarWidth
+- WindowInfo.InitialSidebarScale
+
+[fixes]
++ Fixed DPI Scaling
+
+[features]
++ WindowInfo.DisableCompactingSnap
+  -> WindowInfo.CompactWidthActivation
+
+[changes]
++ WindowInfo.SidebarCompactWidth default value (54) to new value (48)
++ Library:SetWatermark is deprecated due to Library:AddDraggableLabel having the same functionality
+```
+
 ## 18.12.2025
 
 ```diff

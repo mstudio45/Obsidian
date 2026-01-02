@@ -431,6 +431,41 @@ local Sizes = {
     Right = { 0.5, 1 },
 }
 
+--// Scheme Functions \\--
+local SchemeReplaceAlias = {
+    RedColor = "Red",
+    WhiteColor = "White",
+    DarkColor = "Dark"
+}
+
+local SchemeAlias = {
+    Red = "RedColor",
+    White = "WhiteColor",
+    Dark = "DarkColor"
+}
+
+local function GetSchemeValue(Index)
+    if not Index then
+        return nil
+    end
+
+    local ReplaceAliasIndex = SchemeReplaceAlias[Index]
+    if ReplaceAliasIndex and Library.Scheme[ReplaceAliasIndex] ~= nil then
+        Library.Scheme[Index] = Library.Scheme[ReplaceAliasIndex]
+        Library.Scheme[ReplaceAliasIndex] = nil
+
+        return Library.Scheme[Index]
+    end
+
+    local AliasIndex = SchemeAlias[Index]
+    if AliasIndex and Library.Scheme[AliasIndex] ~= nil then
+        --// warn(string.format("Scheme Value %q is deprecated, please use %q instead.", Index, AliasIndex))
+        return Library.Scheme[AliasIndex]
+    end
+
+    return Library.Scheme[Index]
+end
+
 --// Basic Functions \\--
 local function WaitForEvent(Event, Timeout, Condition)
     local Bindable = Instance.new("BindableEvent")
@@ -894,11 +929,11 @@ end
 
 function Library:UpdateColorsUsingRegistry()
     for Instance, Properties in Library.Registry do
-        for Property, ColorIdx in Properties do
-            if typeof(ColorIdx) == "string" then
-                Instance[Property] = Library.Scheme[ColorIdx]
-            elseif typeof(ColorIdx) == "function" then
-                Instance[Property] = ColorIdx()
+        for Property, Index in Properties do
+            local SchemeValue = GetSchemeValue(Index)
+
+            if SchemeValue or typeof(Index) == "function" then
+                Instance[Property] = SchemeValue or Index()
             end
         end
     end
@@ -1002,28 +1037,23 @@ function Library:Validate(Table: { [string]: any }, Template: { [string]: any })
 end
 
 --// Creator Functions \\--
-local SchemeAlias = {
-    RedColor = "Red",
-    WhiteColor = "White",
-    DarkColor = "Dark",
-}
 local function FillInstance(Table: { [string]: any }, Instance: GuiObject)
     local ThemeProperties = Library.Registry[Instance] or {}
 
-    for k, v in Table do
-        if typeof(v) == "string" and Library.Scheme[SchemeAlias[v]] ~= nil then
-            Library.Scheme[v] = Library.Scheme[SchemeAlias[v]]
-            Library.Scheme[SchemeAlias[v]] = nil
+    for key, value in Table do
+        if ThemeProperties[key] then
+            ThemeProperties[key] = nil
+        
+        elseif key ~= "Text" then
+            local SchemeValue = GetSchemeValue(value)
+
+            if SchemeValue or typeof(value) == "function" then
+                ThemeProperties[key] = value
+                value = SchemeValue or value()
+            end
         end
 
-        if ThemeProperties[k] then
-            ThemeProperties[k] = nil
-        elseif k ~= "Text" and (Library.Scheme[v] or typeof(v) == "function") then
-            ThemeProperties[k] = v
-            v = Library.Scheme[v] or v()
-        end
-
-        Instance[k] = v
+        Instance[key] = value
     end
 
     if GetTableSize(ThemeProperties) > 0 then
