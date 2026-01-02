@@ -5888,7 +5888,6 @@ function Library:CreateWindow(WindowInfo)
     local Container
 
     local InitialLeftWidth = math.ceil(WindowInfo.Size.X.Offset * 0.3)
-    local InitialRightWidth = math.ceil(WindowInfo.Size.X.Offset * 0.7 - 1)
     local IsCompact = WindowInfo.SidebarCompacted
     local LastExpandedWidth = InitialLeftWidth
 
