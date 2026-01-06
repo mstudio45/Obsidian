@@ -5852,6 +5852,7 @@ function Library:CreateWindow(WindowInfo)
     if typeof(WindowInfo.Font) == "EnumItem" then
         WindowInfo.Font = Font.fromEnum(WindowInfo.Font)
     end
+    WindowInfo.CornerRadius = math.min(WindowInfo.CornerRadius, 20)
 
     --// Old Naming \\--
     if WindowInfo.Compact ~= nil then
@@ -5919,6 +5920,10 @@ function Library:CreateWindow(WindowInfo)
             })
         )
         Library:AddOutline(MainFrame)
+        Library:MakeLine(MainFrame, {
+            Position = UDim2.fromOffset(0, 48),
+            Size = UDim2.new(1, 0, 0, 1),
+        })
 
         DividerLine = New("Frame", {
             BackgroundColor3 = "OutlineColor",
@@ -5926,20 +5931,6 @@ function Library:CreateWindow(WindowInfo)
             Size = UDim2.new(0, 1, 1, -21),
             Parent = MainFrame,
         })
-        local Lines = {
-            {
-                Position = UDim2.fromOffset(0, 48),
-                Size = UDim2.new(1, 0, 0, 1),
-            },
-            {
-                AnchorPoint = Vector2.new(0, 1),
-                Position = UDim2.new(0, 0, 1, -20),
-                Size = UDim2.new(1, 0, 0, 1),
-            },
-        }
-        for _, Info in Lines do
-            Library:MakeLine(MainFrame, Info)
-        end
 
         if WindowInfo.BackgroundImage then
             New("ImageLabel", {
@@ -6136,26 +6127,31 @@ function Library:CreateWindow(WindowInfo)
         end
 
         --// Bottom Bar \\--
-        local BottomBar = New("Frame", {
+        local BottomBackground = New("Frame", {
             AnchorPoint = Vector2.new(0, 1),
             BackgroundColor3 = function()
                 return Library:GetBetterColor(Library.Scheme.BackgroundColor, 4)
             end,
             Position = UDim2.fromScale(0, 1),
+            Size = UDim2.new(1, 0, 0, WindowInfo.CornerRadius * 2),
+            Parent = MainFrame,
+        })
+        Library:MakeLine(MainFrame, {
+            AnchorPoint = Vector2.new(0, 1),
+            Position = UDim2.new(0, 0, 1, -20),
+            Size = UDim2.new(1, 0, 0, 1),
+        })
+
+        local BottomBar = New("Frame", {
+            AnchorPoint = Vector2.new(0, 1),
+            BackgroundTransparency = 1,
+            Position = UDim2.fromScale(0, 1),
             Size = UDim2.new(1, 0, 0, 20),
             Parent = MainFrame,
         })
-        do
-            local Cover = Library:MakeCover(BottomBar, "Top")
-            Library:AddToRegistry(Cover, {
-                BackgroundColor3 = function()
-                    return Library:GetBetterColor(Library.Scheme.BackgroundColor, 4)
-                end,
-            })
-        end
         New("UICorner", {
             CornerRadius = UDim.new(0, WindowInfo.CornerRadius),
-            Parent = BottomBar,
+            Parent = BottomBackground,
         })
 
         --// Footer
@@ -6173,7 +6169,7 @@ function Library:CreateWindow(WindowInfo)
             ResizeButton = New("TextButton", {
                 AnchorPoint = Vector2.new(1, 0),
                 BackgroundTransparency = 1,
-                Position = UDim2.fromScale(1, 0),
+                Position = UDim2.new(1, -WindowInfo.CornerRadius / 4, 0, 0),
                 Size = UDim2.fromScale(1, 1),
                 SizeConstraint = Enum.SizeConstraint.RelativeYY,
                 Text = "",
