@@ -1,3 +1,12 @@
+## 16.01.2026
+
+```diff
+[features]
++ Library:ResetCursorIcon()
++ Library:ChangeCursorIcon(ImageId: string)
++ Library:ChangeCursorIconSize(Size: UDim2)
+```
+
 ## 30.12.2025
 
 ```diff
