@@ -4066,6 +4066,8 @@ do
             end)
         else
             Box:GetPropertyChangedSignal("Text"):Connect(function()
+                if Box.Text == Input.Value then return end
+                
                 Input:SetValue(Box.Text)
             end)
         end
