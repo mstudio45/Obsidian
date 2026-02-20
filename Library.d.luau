@@ -724,6 +724,9 @@ export type Window = {
             FooterButtons: { [string]: DialogButtonInfo }?
         }
     ) -> Dialog,
+    ChangeTitle: (self: Window, Title: string) -> (),
+    ChangeBackgroundImage: (self: Window, Image: string) -> (),
+    ChangeFooter: (self: Window, Footer: string) -> (),
 }
 
 --// Main Library Type

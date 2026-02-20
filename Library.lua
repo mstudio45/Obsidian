@@ -6041,6 +6041,7 @@ function Library:CreateWindow(WindowInfo)
     local ResizeButton
     local Tabs
     local Container
+    local BackgroundImage
 
     local InitialLeftWidth = math.ceil(WindowInfo.Size.X.Offset * 0.3)
     local IsCompact = WindowInfo.SidebarCompacted
@@ -6087,7 +6088,7 @@ function Library:CreateWindow(WindowInfo)
         })
 
         if WindowInfo.BackgroundImage then
-            New("ImageLabel", {
+            BackgroundImage = New("ImageLabel", {
                 Image = WindowInfo.BackgroundImage,
                 Position = UDim2.fromScale(0, 0),
                 Size = UDim2.fromScale(1, 1),
@@ -6096,6 +6097,11 @@ function Library:CreateWindow(WindowInfo)
                 BackgroundTransparency = 1,
                 ImageTransparency = 0.75,
                 Parent = MainFrame,
+            })
+
+            New("UICorner", {
+                CornerRadius = UDim.new(0, WindowInfo.CornerRadius),
+                Parent = BackgroundImage,
             })
         end
 
@@ -6390,6 +6396,15 @@ function Library:CreateWindow(WindowInfo)
 
         WindowTitle.Text = title
         WindowInfo.Title = title
+    end
+
+    if WindowInfo.BackgroundImage then
+        function Window:SetBackgroundImage(Image)
+            assert(typeof(Image) == "string", "Expected string for Image got: " .. typeof(Image))
+    
+            BackgroundImage.Image = Image
+            WindowInfo.BackgroundImage = Image
+        end
     end
 
     function Window:SetFooter(footer)
