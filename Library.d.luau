@@ -716,6 +716,9 @@ export type Window = {
         Info: {
             Title: string,
             Description: string?,
+            Icon: string?,
+            TitleColor: Color3?,
+            DescriptionColor: Color3?,
             AutoDismiss: boolean?,
             OutsideClickDismiss: boolean?,
             FooterButtons: { [string]: DialogButtonInfo }?
