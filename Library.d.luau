@@ -48,6 +48,9 @@ export type Notification = {
     SoundId: string | number?,
     Steps: number?,
     Persist: boolean?,
+    Icon: string?,
+    BigIcon: string?,
+    IconColor: Color3 | string?,
     Destroyed: boolean,
 
     Resize: (self: Notification) -> (),
@@ -558,7 +561,7 @@ export type Option =
 
 --// Container Types
 export type BaseGroupbox = {
-    AddDivider: (self: Groupbox) -> (),
+    AddDivider: (self: Groupbox, MarginTop: number?, MarginBottom: number?) -> (),
     AddLabel: (
         self: Groupbox,
         Info: { Text: string, DoesWrap: boolean?, Size: number?, Visible: boolean?, Idx: string? } | string,
