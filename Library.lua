@@ -5817,7 +5817,7 @@ function Library:Notify(...)
 
     if Data.Title then
         Title = New("TextLabel", {
-            AutomaticSize = Enum.AutomaticSize.X,
+            AutomaticSize = Enum.AutomaticSize.None,
             BackgroundTransparency = 1,
             AnchorPoint = Vector2.new(0, 0.5),
             Position = UDim2.new(0, (Data.Icon and 21 or 0), 0.5, 0),
@@ -5833,7 +5833,7 @@ function Library:Notify(...)
 
     if Data.Description then
         Desc = New("TextLabel", {
-            AutomaticSize = Enum.AutomaticSize.X,
+            AutomaticSize = Enum.AutomaticSize.None,
             BackgroundTransparency = 1,
             Size = UDim2.fromScale(0, 0),
             Text = Data.Description,
@@ -5851,7 +5851,7 @@ function Library:Notify(...)
         if Title then
             local X, Y =
                 Library:GetTextBounds(Title.Text, Title.FontFace, Title.TextSize, (NotificationArea.AbsoluteSize.X / Library.DPIScale) - 24 - ExtraWidth - IconWidth)
-            Title.Size = UDim2.fromOffset(0, Y)
+            Title.Size = UDim2.fromOffset(X, Y)
             TitleX = X + IconWidth
             TitleContainer.Size = UDim2.fromOffset(TitleX, math.max(Y, IconLabel and 16 or 0))
         end
@@ -5859,7 +5859,7 @@ function Library:Notify(...)
         if Desc then
             local X, Y =
                 Library:GetTextBounds(Desc.Text, Desc.FontFace, Desc.TextSize, (NotificationArea.AbsoluteSize.X / Library.DPIScale) - 24 - ExtraWidth)
-            Desc.Size = UDim2.fromOffset(0, Y)
+            Desc.Size = UDim2.fromOffset(X, Y)
             DescX = X
         end
 
