@@ -978,7 +978,7 @@ end
 
 function IsValidCustomIcon(Icon: string)
     return typeof(Icon) == "string"
-        and (Icon:match("rbxasset") or Icon:match("roblox%.com/asset/%?id=") or Icon:match("rbxthumb://type="))
+        and (Icon:match("rbxasset") or Icon:match("roblox%.com/asset/%?id=") or Icon:match("rbxthumb://type=") or Content.fromUri(Icon).SourceType ~= Enum.ContentSourceType.None)
 end
 
 type Icon = {
