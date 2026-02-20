@@ -1156,7 +1156,7 @@ do
         BackgroundColor3 = "DarkColor",
         Position = UDim2.fromScale(0.5, 0.5),
         Size = UDim2.new(1, 2, 1, 2),
-        ZIndex = 11000,
+        ZIndex = 10999,
         Parent = Cursor,
     })
 
@@ -1173,7 +1173,7 @@ do
         BackgroundColor3 = "DarkColor",
         Position = UDim2.fromScale(0.5, 0.5),
         Size = UDim2.new(1, 2, 1, 2),
-        ZIndex = 11000,
+        ZIndex = 10999,
         Parent = CursorV,
     })
 
