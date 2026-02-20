@@ -674,6 +674,24 @@ export type KeyTab = BaseGroupbox & {
     Hide: (self: KeyTab) -> (),
 }
 
+export type DialogButtonInfo = {
+    Title: string,
+    Variant: string?,
+    WaitTime: number?,
+    Order: number?,
+    Callback: (() -> ())?
+}
+
+export type Dialog = {
+    SetTitle: (self: Dialog, Title: string) -> (),
+    SetDescription: (self: Dialog, Description: string) -> (),
+    AddFooterButton: (self: Dialog, ButtonIdx: string, ButtonInfo: DialogButtonInfo) -> (),
+    RemoveFooterButton: (self: Dialog, ButtonIdx: string) -> (),
+    SetButtonDisabled: (self: Dialog, ButtonIdx: string, Disabled: boolean) -> (),
+    SetButtonOrder: (self: Dialog, ButtonIdx: string, Order: number) -> (),
+    Dismiss: (self: Dialog) -> (),
+}
+
 export type Window = {
     IsSidebarCompacted: (self: Window) -> boolean,
     GetSidebarWidth: (self: Window) -> number,
@@ -690,6 +708,16 @@ export type Window = {
         Icon: string?,
         Description: string?
     ) -> KeyTab,
+    AddDialog: (
+        self: Window,
+        Info: {
+            Title: string,
+            Description: string?,
+            AutoDismiss: boolean?,
+            OutsideClickDismiss: boolean?,
+            FooterButtons: { [string]: DialogButtonInfo }?
+        }
+    ) -> Dialog,
 }
 
 --// Main Library Type
