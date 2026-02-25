@@ -639,7 +639,7 @@ export type Tabbox = {
     Holder: Frame,
     Tabs: { [string]: SubTab },
 
-    AddTab: (self: Tabbox, Name: string) -> SubTab,
+    AddTab: (self: Tabbox, Name: string, IconName: string?) -> SubTab,
 }
 
 export type Tab = {
