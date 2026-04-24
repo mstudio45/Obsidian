@@ -236,6 +236,7 @@ local Library = {
     Scales = {},
 
     ImageManager = CustomImageManager,
+    ShowCursorBinding = tostring({}):sub(10),
 }
 
 if RunService:IsStudio() then
@@ -8470,10 +8471,11 @@ function Library:CreateWindow(WindowInfo)
 
         if Library.Toggled and not Library.IsMobile then
             local OldMouseIconEnabled = UserInputService.MouseIconEnabled
+            local ShowCursorBinding = Library.ShowCursorBinding
             pcall(function()
-                RunService:UnbindFromRenderStep("ShowCursor")
+                RunService:UnbindFromRenderStep(ShowCursorBinding)
             end)
-            RunService:BindToRenderStep("ShowCursor", Enum.RenderPriority.Last.Value, function()
+            RunService:BindToRenderStep(ShowCursorBinding, Enum.RenderPriority.Last.Value, function()
                 UserInputService.MouseIconEnabled = not Library.ShowCustomCursor
 
                 Cursor.Position = UDim2.fromOffset(Mouse.X, Mouse.Y)
@@ -8482,7 +8484,7 @@ function Library:CreateWindow(WindowInfo)
                 if not (Library.Toggled and ScreenGui and ScreenGui.Parent) then
                     UserInputService.MouseIconEnabled = OldMouseIconEnabled
                     Cursor.Visible = false
-                    RunService:UnbindFromRenderStep("ShowCursor")
+                    RunService:UnbindFromRenderStep(ShowCursorBinding)
                 end
             end)
         elseif not Library.Toggled then
