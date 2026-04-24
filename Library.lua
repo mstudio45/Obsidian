@@ -236,7 +236,7 @@ local Library = {
     Scales = {},
 
     ImageManager = CustomImageManager,
-    ShowCursorBinding = tostring({}):sub(10),
+    ShowCursorBinding = string.sub(tostring({}), 10),
 }
 
 if RunService:IsStudio() then
