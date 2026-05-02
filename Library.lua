@@ -4836,7 +4836,9 @@ do
 
             local ValueImage = nil
             if Dropdown.SpecialType == "Player" and Dropdown.EnablePlayerImages == true then
-                ValueImage = { Url = string.format("rbxthumb://type=AvatarHeadShot&id=%s&w=48&h=48", tostring(Value.UserId)) }
+                if typeof(Value) == "Instance" and Value:IsA("Player") then
+                    ValueImage = { Url = string.format("rbxthumb://type=AvatarHeadShot&id=%s&w=48&h=48", tostring(Value.UserId)) }
+                end
             else
                 if Info.ValueImages and Info.ValueImages[Value] then
                     ValueImage = Library:GetCustomIcon(Info.ValueImages[Value])
