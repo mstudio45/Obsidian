@@ -4785,7 +4785,7 @@ do
             Parent = DisplayContainer,
         })
 
-        local DisplayButton = New("TextLabel", {
+        local DisplayButton = New("TextButton", {
             Active = not Dropdown.Disabled,
             BackgroundTransparency = 1,
             Size = UDim2.new(1, 0, 0, 21),
@@ -5190,13 +5190,16 @@ do
             Label.Visible = not not Text
         end
 
-        DisplayContainer.MouseButton1Click:Connect(function()
+        local ToggleDropdown = function()
             if Dropdown.Disabled then
                 return
             end
 
             MenuTable:Toggle()
-        end)
+        end
+
+        DisplayContainer.MouseButton1Click:Connect(ToggleDropdown)
+        DisplayButton.MouseButton1Click:Connect(ToggleDropdown)
 
         if SearchBox then
             SearchBox:GetPropertyChangedSignal("Text"):Connect(Dropdown.BuildDropdownList)
